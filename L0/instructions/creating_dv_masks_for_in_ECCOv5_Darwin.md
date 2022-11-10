@@ -1,8 +1,10 @@
-# Using the diagnostics_vec package for in ECCOv5 Darwin
+# Creating diagnostic_vec masks for use in the ECCOv5 Darwin model
 
-The steps required to run ECCOv5 Darwin with diagnostics_vec are as follows:
-1. Build ECCOv5 Darwin with diagnostics_vec
-2. Generate 
+
+## Prepare subdomain grids
+To generate the masks for model boundary conditions, the model grid is required. It is convenient to generate similar grid files for each subdomain model so that the mask script can easily access the subdomain geometries. To generate these files, I have found it is easier to run each model for one timestep, leveraging the nice `mnc` package that groups model grid parameters into a single file. Instructions for running each model to generate the grid are provided in each L1 model subdirectory.
+
+Once the grids for each of these models is generate, a copy is made in a `downscale_darwin/nc_grids` directory.
 
 
 ## Generate the diagnostic_vec masks
