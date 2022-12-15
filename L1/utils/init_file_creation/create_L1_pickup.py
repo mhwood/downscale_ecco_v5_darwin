@@ -278,12 +278,6 @@ def create_L1_pickup_file(config_dir, model_name,
 
             domain_wet_cells_3D = read_grid_mask(config_dir,model_name,var_name)
 
-            if use_interpolation_grids:
-                L1_interpolation_mask, L1_source_rows, L1_source_cols, L1_source_levels = \
-                    read_interpolation_grid(df, config_dir, model_name, var_name,
-                                            ecco_XC, ecco_YC, ecco_wet_cells, ecco_wet_cells_on_tile_domain,
-                                            XC, YC, print_level)
-
             # plt.subplot(1, 3, 1)
             # plt.imshow(ecco_wet_cells[0, :, :], origin='lower')
             # plt.subplot(1, 3, 2)
@@ -295,10 +289,20 @@ def create_L1_pickup_file(config_dir, model_name,
             mean_vertical_difference = 0
             subset_copy = np.copy(ecco_grid)
 
-            # if var_name.lower() not in ['etan', 'detahdt', 'etah']:
-            #     ecco_grid, ecco_wet_cells = df.interpolate_var_grid_faces_to_new_depth_levels(
-            #         ecco_grid, ecco_wet_cells, ecco_delR, delR)
-            # print('     - Skipping the vertical interpolation')
+            ecco_grid = np.array(ecco_grid)
+            ecco_wet_cells = np.array(ecco_wet_cells)
+            ecco_delR = np.array(ecco_delR)
+            delR = np.array(delR)
+
+            if var_name.lower() not in ['etan', 'detahdt', 'etah']:
+                ecco_grid, ecco_wet_cells = df.interpolate_var_grid_faces_to_new_depth_levels(
+                    ecco_grid, ecco_wet_cells, ecco_delR, delR)
+
+            if use_interpolation_grids:
+                L1_interpolation_mask, L1_source_rows, L1_source_cols, L1_source_levels = \
+                    read_interpolation_grid(df, config_dir, model_name, var_name,
+                                            ecco_XC, ecco_YC, ecco_wet_cells, ecco_wet_cells_on_tile_domain,
+                                            XC, YC, print_level)
 
             # # plt.subplot(1,2,1)
             # # plt.imshow(subset_copy[:,10,:])
@@ -323,10 +327,8 @@ def create_L1_pickup_file(config_dir, model_name,
                                                                              XC, YC, domain_wet_cells_3D_for_interpolation,
                                                                              L1_interpolation_mask, L1_source_rows,
                                                                              L1_source_cols, L1_source_levels,
-                                                                             mean_vertical_difference=0,
-                                                                             fill_downward=True,
                                                                              remove_zeros=True, printing=printing,
-                                                                             testing=True)
+                                                                             testing=False)
             else:
                 interp_field = df.downscale_3D_field(ecco_XC, ecco_YC,
                                                      ecco_grid, ecco_wet_cells,

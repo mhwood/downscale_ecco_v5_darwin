@@ -45,7 +45,6 @@ def create_src_dest_dicts_from_ref(config_dir, L1_model_name, mask_name, var_nam
 
     return(dest_files_out, source_file_read_dict, source_file_read_index_sets)
 
-
 def get_boundary_Nr_from_manual_list(L1_model_name, boundary):
     if L1_model_name=='L1_W_Greenland':
         if boundary=='north':
@@ -82,7 +81,6 @@ def get_boundary_Nr_from_manual_list(L1_model_name, boundary):
 
     return(boundary_Nr)
 
-
 def read_grid_geometry_from_nc(config_dir,model_name,var_name):
     nc_file = os.path.join(config_dir,'nc_grids',model_name+'_grid.nc')
     ds = nc4.Dataset(nc_file)
@@ -104,7 +102,6 @@ def read_grid_geometry_from_nc(config_dir,model_name,var_name):
     mask[mask>0]=1
     return(XC,YC,AngleCS,AngleSN,mask,delR)
 
-
 def read_mask_reference_from_nc_dict(nc_dict_file,model_name,mask_name):
     ds = nc4.Dataset(nc_dict_file)
     grp = ds.groups[model_name+'_'+mask_name]
@@ -113,7 +110,6 @@ def read_mask_reference_from_nc_dict(nc_dict_file,model_name,mask_name):
     source_cols = grp.variables['source_cols'][:]
     ds.close()
     return(source_faces, source_rows,source_cols)
-
 
 def read_L0_boundary_variable_points(L0_run_dir, model_name, boundary, var_name,
                                      source_files,source_file_read_indices,
@@ -131,7 +127,7 @@ def read_L0_boundary_variable_points(L0_run_dir, model_name, boundary, var_name,
     points = np.zeros((np.size(faces), 2))
     hfac_points = np.zeros((Nr,np.size(faces)))
     if var_name in ['ETAN','AREA','HEFF','HSNOW','UICE','VICE']:
-        values = np.zeros((n_Timesteps, np.size(faces)))
+        values = np.zeros((n_Timesteps, 1, np.size(faces)))
     else:
         values = np.zeros((n_Timesteps, Nr, np.size(faces)))
 
@@ -191,14 +187,14 @@ def read_L0_boundary_variable_points(L0_run_dir, model_name, boundary, var_name,
                         angle_sin = ecco_AngleSN_faces[faces[n]][rows[n], cols[n]]
                         if var_name=='UICE':
                             zonal_velocity = angle_cos * u_var_grid[:, n] - angle_sin * v_var_grid[:, n]
-                            values[index_counter:index_counter + (end_file_index - start_file_index)+1, n] = zonal_velocity
+                            values[index_counter:index_counter + (end_file_index - start_file_index)+1, 0, n] = zonal_velocity
                             # values[index_counter:index_counter + (end_file_index - start_file_index),n] = zonal_velocity
                         if var_name=='VICE':
                             meridional_velocity = angle_sin * u_var_grid[:, n] + angle_cos * v_var_grid[:, n]
-                            values[index_counter:index_counter + (end_file_index - start_file_index)+1,n] = meridional_velocity
+                            values[index_counter:index_counter + (end_file_index - start_file_index)+1,0, n] = meridional_velocity
                             # values[index_counter:index_counter + (end_file_index - start_file_index),n] = meridional_velocity
                     else:
-                        values[index_counter:index_counter + (end_file_index - start_file_index)+1, n] = var_grid[:, n]
+                        values[index_counter:index_counter + (end_file_index - start_file_index)+1, 0, n] = var_grid[:, n]
                         # values[index_counter:index_counter + (end_file_index - start_file_index), n] = var_grid[:,n]
         else:
             if var_name in ['UVEL','VVEL']:
@@ -226,23 +222,22 @@ def read_L0_boundary_variable_points(L0_run_dir, model_name, boundary, var_name,
                             zonal_velocity = np.zeros((np.shape(u_var_grid)[0],np.shape(u_var_grid)[1]))
                             for k in range(np.shape(zonal_velocity)[1]):
                                 zonal_velocity[:,k] = angle_cos * u_var_grid[:, k, n] - angle_sin * v_var_grid[:, k, n]
-                            values[index_counter:index_counter + (end_file_index - start_file_index)+1, :,n] = zonal_velocity
+                            values[index_counter:index_counter + (end_file_index - start_file_index)+1, :boundary_Nr,n] = zonal_velocity
                             # values[index_counter:index_counter + (end_file_index - start_file_index), :boundary_Nr, n] = zonal_velocity
                         if var_name=='VVEL':
                             meridional_velocity = np.zeros((np.shape(u_var_grid)[0],np.shape(u_var_grid)[1]))
                             for k in range(np.shape(meridional_velocity)[1]):
                                 meridional_velocity[:,k] = angle_sin * u_var_grid[:, k, n] + angle_cos * v_var_grid[:, k, n]
-                            values[index_counter:index_counter + (end_file_index - start_file_index)+1,:,n] = meridional_velocity
+                            values[index_counter:index_counter + (end_file_index - start_file_index)+1,:boundary_Nr,n] = meridional_velocity
                             # values[index_counter:index_counter + (end_file_index - start_file_index), :boundary_Nr, n] = meridional_velocity
                     else:
-                        values[index_counter:index_counter + (end_file_index - start_file_index)+1, :, n] = var_grid[:, :, n]
+                        values[index_counter:index_counter + (end_file_index - start_file_index)+1, :boundary_Nr, n] = var_grid[:, :, n]
                         # values[index_counter:index_counter + (end_file_index - start_file_index), :boundary_Nr, n] = var_grid[:, :, n]
 
         index_counter += (end_file_index - start_file_index)+1
         # index_counter += (end_file_index - start_file_index)
 
     return(points,values,hfac_points)
-
 
 def downscale_L0_bc_field_to_L1(df, mask_name, var_name,
                                 L1_points, L1_values,
@@ -343,6 +338,7 @@ def create_bc_field(config_dir, ecco_dir, L1_model_name, mask_name,
     llc = 270
     ecco_XC_faces, ecco_YC_faces, ecco_AngleCS_faces, ecco_AngleSN_faces, ecco_hFacC_faces = \
         ef.read_ecco_geometry_to_faces(ecco_dir, llc)
+
     Nr_in = 50
     delR_in = np.array([10.00, 10.00, 10.00, 10.00, 10.00, 10.00, 10.00, 10.01,
                         10.03, 10.11, 10.32, 10.80, 11.76, 13.42, 16.04, 19.82, 24.85,
@@ -396,7 +392,7 @@ def create_bc_field(config_dir, ecco_dir, L1_model_name, mask_name,
     source_faces, source_rows, source_cols = read_mask_reference_from_nc_dict(nc_dict_file, L1_model_name, mask_name)
 
     for dest_file in dest_files:
-        if dest_file not in os.listdir(os.path.join(output_dir,mask_name,boundary_var_name)):
+        if dest_file not in []:#os.listdir(os.path.join(output_dir,mask_name,boundary_var_name)):
             # try:
             print('    - Downscaling the timesteps to be stored in file ' + str(dest_file))
             source_files = source_file_read_dict[dest_file]
@@ -413,12 +409,15 @@ def create_bc_field(config_dir, ecco_dir, L1_model_name, mask_name,
                                                  ecco_hFacC_faces,
                                                  print_level)
 
+            if L1_model_name == 'L1_mac_delta':
+                L0_boundary_points[:,0] += 360
+
 
             # plt.plot(L1_XC_subset,L1_YC_subset,'g.')
             # plt.plot(L1_points[:,0],L1_points[:,1],'k.')
             # plt.show()
 
-            if boundary_var_name in ['THETA', 'SALT', 'UVEL', 'VVEL']:
+            if boundary_var_name in ['THETA', 'SALT', 'UVEL', 'VVEL'] or 'PTRACE' in boundary_var_name:
                 if Nr_out!=Nr_in:
                     L0_boundary_values, L0_boundary_point_hFacC = df.interpolate_var_points_timeseries_to_new_depth_levels(
                         L0_boundary_values, L0_boundary_point_hFacC, delR_in, delR_out)

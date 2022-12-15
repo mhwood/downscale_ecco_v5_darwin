@@ -10,7 +10,7 @@ import ast
 
 def create_BCs(config_dir, ecco_dir, print_level):
 
-    L1_model_name = 'L1_East_Pacific'
+    L1_model_name = 'L1_mac_delta'
 
     sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
 
@@ -24,9 +24,8 @@ def create_BCs(config_dir, ecco_dir, print_level):
     import create_L1_BC_field_ref as ebcr
     ebcr.create_L1_BC_ref_file(config_dir, L1_model_name, print_level)
 
-    proc_ids = np.arange(105).tolist() #(31+4)*3 = 105
-    boundaries = ['north','south','west']
-    proc_ids = proc_ids[12:]
+    proc_ids = np.arange(120).tolist() #(31+9)*3 = 105
+    boundaries = ['north','east','west']
 
     import create_L1_monthly_BCs as cef
     for proc_id in proc_ids:
@@ -59,6 +58,6 @@ if __name__ == '__main__':
     config_dir = args.config_dir
     ecco_dir = args.ecco_dir
 
-    create_BCs(config_dir, ecco_dir, print_level=4)
+    create_BCs(config_dir, ecco_dir, print_level=5)
    
 

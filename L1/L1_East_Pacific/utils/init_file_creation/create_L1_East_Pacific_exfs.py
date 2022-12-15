@@ -10,7 +10,7 @@ import ast
 
 def create_exfs(config_dir, ecco_dir, print_level):
 
-    L1_model_name = 'L1_GOM'
+    L1_model_name = 'L1_East_Pacific'
 
     sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
 

@@ -12,7 +12,11 @@ import argparse
 
 def read_exf_fields(exf_dir, var_name, n_rows, n_cols, year, month, day, hour):
 
-    file_path = os.path.join(exf_dir,var_name, 'L1_exf_' + var_name + '.'+str(year)+'{:02d}'.format(month)+'.bin')
+    if var_name in ['UWIND','VWIND','USTRESS','VSTRESS']:
+        file_path = os.path.join(exf_dir,var_name, 'L1_exf_' + var_name + '.'+str(year)+'{:02d}'.format(month)+'_rotated.bin')
+    else:
+        file_path = os.path.join(exf_dir, var_name,
+                                 'L1_exf_' + var_name + '.' + str(year) + '{:02d}'.format(month) + '.bin')
     exf_field = np.fromfile(file_path, '>f4')
 
     if month in [1, 3, 5, 7, 8, 10, 12]:
@@ -120,7 +124,7 @@ def plot_L1_exfs(config_dir, L1_model_name, n_rows, n_cols, year, month, day, ho
         plt.title(var_names[ff])
         counter += 1
 
-    plt.suptitle(title_var_name + ' Boundary Conditions on date ' + str(year) + '/' + str(month) + '/' + str(day))
+    plt.suptitle('Boundary Conditions on date ' + str(year) + '/' + str(month) + '/' + str(day))
 
     plt.savefig(os.path.join(output_dir, L1_model_name+'_exf_fields_'+str(year)+'{:02d}'.format(month)+'{:02d}'.format(day)+'_'+'{:02d}'.format(hour)+'00.png'), bbox_inches='tight')
     plt.close(fig)

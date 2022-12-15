@@ -10,7 +10,7 @@ import ast
 
 def create_BCs(config_dir, ecco_dir, print_level):
 
-    L1_model_name = 'L1_East_Pacific'
+    L1_model_name = 'L1_GOM'
 
     sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
 
@@ -20,12 +20,12 @@ def create_BCs(config_dir, ecco_dir, print_level):
     final_year = 1992
     final_month = 1
 
-    # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
-    import create_L1_BC_field_ref as ebcr
-    ebcr.create_L1_BC_ref_file(config_dir, L1_model_name, print_level)
+    # # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
+    # import create_L1_BC_field_ref as ebcr
+    # ebcr.create_L1_BC_ref_file(config_dir, L1_model_name, print_level)
 
     proc_ids = np.arange(105).tolist() #(31+4)*3 = 105
-    boundaries = ['north','south','west']
+    boundaries = ['north','south','east']
 
     import create_L1_monthly_BCs as cef
     for proc_id in proc_ids:

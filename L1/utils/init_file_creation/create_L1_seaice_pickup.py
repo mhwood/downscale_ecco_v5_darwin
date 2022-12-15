@@ -47,6 +47,48 @@ def read_grid_mask(config_dir,model_name,var_name):
 
     return(mask)
 
+def read_interpolation_grid(df,config_dir, model_name, var_name,
+                            ecco_XC, ecco_YC, ecco_wet_cells, ecco_wet_cells_on_tile_domain, XC, YC, print_level):
+
+    interpolation_grid_file = model_name+'_interpolation_grid.nc'
+
+    if interpolation_grid_file not in os.listdir(os.path.join(config_dir,'nc_grids')):
+
+        if print_level >= 3:
+            print('            - Creating the interpolation grids for this model (hasnt been done yet!)')
+
+        domain_wet_cells_3D_C = read_grid_mask(config_dir,model_name,'Theta')
+        domain_wet_cells_3D_S = read_grid_mask(config_dir, model_name, 'Vvel')
+        domain_wet_cells_3D_W = read_grid_mask(config_dir, model_name, 'Uvel')
+
+        interpolation_type_grid_C, source_row_grid_C, source_col_grid_C, source_level_grid_C, \
+        interpolation_type_grid_S, source_row_grid_S, source_col_grid_S, source_level_grid_S, \
+        interpolation_type_grid_W, source_row_grid_W, source_col_grid_W, source_level_grid_W = \
+            df.create_interpolation_grids(ecco_XC, ecco_YC, ecco_wet_cells, ecco_wet_cells_on_tile_domain,
+                               XC, YC, domain_wet_cells_3D_C, domain_wet_cells_3D_S, domain_wet_cells_3D_W)
+
+        df.write_interpolation_grid_to_nc(config_dir, model_name,
+                                       interpolation_type_grid_C, source_row_grid_C, source_col_grid_C, source_level_grid_C,
+                                       interpolation_type_grid_S, source_row_grid_S, source_col_grid_S, source_level_grid_S,
+                                       interpolation_type_grid_W, source_row_grid_W, source_col_grid_W, source_level_grid_W)
+
+    ds = nc4.Dataset(os.path.join(config_dir,'nc_grids',interpolation_grid_file))
+    if var_name in ['Vvel','SIvice','siVICE','VWIND','VSTRESS']:
+        grp = ds.groups['S']
+    elif var_name in ['Uvel','SIuice','siUICE','UWIND','USTRESS']:
+        grp = ds.groups['W']
+    else:
+        grp = ds.groups['C']
+
+    interpolation_type_grid = grp.variables['interp_type'][:,:,:]
+    source_rows_grid = grp.variables['source_rows'][:, :, :]
+    source_cols_grid = grp.variables['source_cols'][:, :, :]
+    source_levels_grid = grp.variables['source_levels'][:,:,:]
+
+    ds.close()
+
+    return(interpolation_type_grid, source_rows_grid, source_cols_grid, source_levels_grid)
+
 def interpolate_ecco_wetgrid_to_domain(XC, YC, ecco_XC, ecco_YC, ecco_wet_cells):
 
     ecco_wet_cells_on_tile_domain = np.zeros((1,np.shape(XC)[0],np.shape(XC)[1]))
@@ -123,9 +165,9 @@ def write_seaice_pickup_file(output_file,dtype,pickup_grid,subset_metadata):
     f.write(output)
     f.close()
 
-def create_L1_ECCO_seaice_pickup_file(config_dir, model_name,
+def create_L1_seaice_pickup_file(config_dir, model_name,
                                       ecco_dir, llc, ordered_ecco_tiles, ordered_ecco_tile_rotations,
-                                      parent_model_pickup_iteration, print_level, read_darwin = False):
+                                      parent_model_pickup_iteration, print_level, use_interpolation_grids = True):
 
     sys.path.insert(1, os.path.join(config_dir, 'utils', 'init_file_creation'))
     import downscale_functions as df
@@ -147,6 +189,14 @@ def create_L1_ECCO_seaice_pickup_file(config_dir, model_name,
     ecco_XC, ecco_YC, ecco_AngleCS, ecco_AngleSN, ecco_hfacC, _ = \
         ef.read_ecco_grid_geometry(ecco_dir, llc, ordered_ecco_tiles, ordered_ecco_tile_rotations)
 
+    if model_name == 'L1_mac_delta':
+        ecco_XC += 360
+
+
+    # plt.plot(ecco_XC, ecco_YC, 'b.')
+    # plt.plot(XC, YC, 'k.')
+    # plt.show()
+
     # C = plt.imshow(ecco_hfacC[0,:,:], origin='lower')
     # plt.colorbar(C)
     # plt.show()
@@ -154,10 +204,7 @@ def create_L1_ECCO_seaice_pickup_file(config_dir, model_name,
     if print_level >= 1:
         print('    - Reading in the ECCO pickup file')
     pickup_file = 'pickup_seaice.'+'{:010d}'.format(parent_model_pickup_iteration)
-    if read_darwin:
-        pickup_file_path = os.path.join(config_dir,'L0','run_darwin',pickup_file)
-    else:
-        pickup_file_path = os.path.join(config_dir, 'L0', 'run', pickup_file)
+    pickup_file_path = os.path.join(config_dir, 'L0', 'run', pickup_file)
     var_names, var_grids, global_metadata = ef.read_ecco_seaice_pickup_to_stiched_grid(pickup_file_path, ordered_ecco_tiles, ordered_ecco_tile_rotations)
 
     # C = plt.imshow(var_grids[4][0,:,:], origin='lower',vmin=-0.5,vmax=0.5,cmap='seismic')
@@ -194,6 +241,12 @@ def create_L1_ECCO_seaice_pickup_file(config_dir, model_name,
             domain_wet_cells_3D = read_grid_mask(config_dir, model_name, var_name)
             domain_wet_cells_3D = domain_wet_cells_3D[:1, :, :]
 
+            if use_interpolation_grids:
+                L1_interpolation_mask, L1_source_rows, L1_source_cols, L1_source_levels = \
+                    read_interpolation_grid(df, config_dir, model_name, var_name,
+                                            ecco_XC, ecco_YC, ecco_wet_cells, ecco_wet_cells_on_tile_domain,
+                                            XC, YC, print_level)
+
             # plt.subplot(1, 3, 1)
             # plt.imshow(ecco_wet_cells[0, :, :], origin='lower')
             # plt.subplot(1, 3, 2)
@@ -211,35 +264,43 @@ def create_L1_ECCO_seaice_pickup_file(config_dir, model_name,
             # plt.imshow(ecco_grid[:, 10, :])
             # plt.show()
 
-            if var_name in ['siAREA','siHEFF','siHSNOW']:
-                remove_zeros = False
+            if print_level >= 4:
+                printing = True
             else:
-                remove_zeros = True
+                printing = False
 
-            interp_field = df.downscale_3D_field_with_zeros(ecco_XC, ecco_YC,
-                                                 ecco_grid, ecco_wet_cells,
-                                                 ecco_wet_cells_on_tile_domain,
-                                                 XC, YC, domain_wet_cells_3D,
-                                                 mean_vertical_difference=0, fill_downward=True,
-                                                 printing=False)
+            if use_interpolation_grids:
+                interp_field = df.downscale_3D_field_with_interpolation_mask(ecco_XC, ecco_YC,
+                                                                             ecco_grid, ecco_wet_cells,
+                                                                             ecco_wet_cells_on_tile_domain,
+                                                                             XC, YC,
+                                                                             domain_wet_cells_3D,
+                                                                             L1_interpolation_mask, L1_source_rows,
+                                                                             L1_source_cols, L1_source_levels,
+                                                                             printing=printing)
+            else:
+                interp_field = df.downscale_3D_field_with_zeros(ecco_XC, ecco_YC,
+                                                     ecco_grid, ecco_wet_cells,
+                                                     ecco_wet_cells_on_tile_domain,
+                                                     XC, YC, domain_wet_cells_3D,
+                                                     mean_vertical_difference=0, fill_downward=True,
+                                                     printing=False)
 
             if np.sum(np.isnan(interp_field))>0:
                 print('Setting '+str(np.sum(np.isnan(interp_field)))+' values to 0 in this grid')
                 interp_field[np.isnan(interp_field)] = 0
 
-            # if var_name=='Theta':
-            #     plt.subplot(2, 3, 1)
-            #     plt.imshow(ecco_wet_cells[0, :, :], origin='lower')
-            #     plt.subplot(2, 3, 2)
-            #     plt.imshow(ecco_wet_cells_on_tile_domain[0, :, :], origin='lower')
-            #     plt.subplot(2, 3, 3)
-            #     plt.imshow(domain_wet_cells_3D[0, :, :], origin='lower')
-            #     plt.subplot(2, 3, 4)
-            #     plt.imshow(ecco_grid[0, :, :], origin='lower')
-            #     plt.subplot(2, 3, 5)
-            #     plt.imshow(interp_field[0, :, :], origin='lower')
-            #     plt.title('Tile: '+str(tile_number))
-            #     plt.show()
+            # plt.subplot(2, 3, 1)
+            # plt.imshow(ecco_wet_cells[0, :, :], origin='lower')
+            # plt.subplot(2, 3, 2)
+            # plt.imshow(ecco_wet_cells_on_tile_domain[0, :, :], origin='lower')
+            # plt.subplot(2, 3, 3)
+            # plt.imshow(domain_wet_cells_3D[0, :, :], origin='lower')
+            # plt.subplot(2, 3, 4)
+            # plt.imshow(ecco_grid[0, :, :], origin='lower')
+            # plt.subplot(2, 3, 5)
+            # plt.imshow(interp_field[0, :, :], origin='lower')
+            # plt.show()
 
             interp_grids.append(interp_field)
 
@@ -256,7 +317,7 @@ def create_L1_ECCO_seaice_pickup_file(config_dir, model_name,
 
     print('    - Outputting the compact pickup grid to the input directory')
     pickup_metadata = dict(global_metadata)
-    output_dir = os.path.join(config_dir, 'L1_grid', model_name, 'input')
+    output_dir = os.path.join(config_dir, 'L1', model_name, 'input')
     output_file = os.path.join(output_dir, 'pickup_seaice.' + '{:010d}'.format(4*parent_model_pickup_iteration))
     dtype = '>f8'
     pickup_metadata['timestepnumber'] = [4*int(pickup_metadata['timestepnumber'][0])]

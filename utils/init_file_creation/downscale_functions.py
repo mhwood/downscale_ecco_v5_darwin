@@ -429,10 +429,11 @@ def count_spreading_levels_in_wet_grid(full_grid,level_grid,wet_grid,
 def create_interpolation_grid(L0_XC, L0_YC, L0_var, L0_wet_grid, L0_wet_grid_on_L1,
                               XC_subset, YC_subset, L1_wet_grid):
 
-    testing = True
+    testing = False
     remove_zeros = True
     printing = True
     fill_downward = True
+    fill_with_nearest_at_end = True
     mean_vertical_difference = 0
 
     full_grid = np.zeros((np.shape(L1_wet_grid)[0], np.shape(XC_subset)[0], np.shape(XC_subset)[1]))
@@ -520,7 +521,7 @@ def create_interpolation_grid(L0_XC, L0_YC, L0_var, L0_wet_grid, L0_wet_grid_on_
                 interpolation_type_grid[np.logical_and(source_row_grid != -1, interpolation_type_grid == 0)] = 2
 
                 if printing:
-                    print('                  - Remaining points before downward spread: '+str(n_remaining))
+                    print('                  - Remaining points before downward spread: '+str(n_remaining)+' (check: filled '+str(np.sum(interpolation_type_grid==2))+')')
 
                 # if there are still values which need to be filled, spread downward
                 if n_remaining > 0 and fill_downward and k > 0:
@@ -531,12 +532,24 @@ def create_interpolation_grid(L0_XC, L0_YC, L0_var, L0_wet_grid, L0_wet_grid_on_
                                                            source_level_grid_full, source_level_grid,
                                                            k,mean_vertical_difference)
 
+                # if k<5:
+                #     C = plt.imshow(source_level_grid,origin='lower')
+                #     plt.colorbar(C)
+                #     plt.show()
+
+                # mark the interpolation grid to indicate the variable was spread vertically
+                interpolation_type_grid[np.logical_and(np.logical_and(source_level_grid<k,source_level_grid!=-1),
+                                                       interpolation_type_grid == 0)] = 3
+
                 n_remaining = np.sum(np.logical_and(grid==0,L1_wet_grid[k,:,:]!=0))
                 if printing:
-                    print('                  - Remaining points after downward spread: '+str(n_remaining))
+                    print('                  - Remaining points after downward spread: '+str(n_remaining)+' (check: filled '+str(np.sum(interpolation_type_grid==3))+')')
 
                 # if, for whatever reason, there are still values to be filled, then fill em with the nearest neighbor
-                if n_remaining > 0:
+                # if the bathy is already "filled" then this should only pertain to the W and S masks
+                # in other words, this is just used for velocity and maybe it is best to fill these with zeros in weird
+                # near-coastal "holes"
+                if n_remaining > 0 and fill_with_nearest_at_end:
                     if len(L0_points) > 0:
 
                         L1_points = np.column_stack([XC_subset.ravel(), YC_subset.ravel()])
@@ -902,6 +915,8 @@ def downscale_3D_field_with_interpolation_mask(L0_XC, L0_YC, L0_var, L0_wet_grid
 
         continue_to_interpolation = True
 
+        tiny_value = 1e-14
+
         if continue_to_interpolation:
             if printing:
                 print('                - Working on level ' + str(k) + ' of ' + str(np.shape(L1_wet_grid)[0])+' ('+str(np.sum(L1_wet_grid[k, :, :] > 0))+' nonzero points found)')
@@ -913,9 +928,9 @@ def downscale_3D_field_with_interpolation_mask(L0_XC, L0_YC, L0_var, L0_wet_grid
                 L0_wet_grid_vert = np.reshape(L0_wet_grid[k, :, :], (np.size(L0_wet_grid[k, :, :]), 1))
                 L0_points = L0_points[L0_wet_grid_vert[:,0] != 0, :]
                 L0_values = L0_values[L0_wet_grid_vert[:,0] != 0, :]
-                if remove_zeros:
-                    L0_points = L0_points[L0_values[:, 0] != 0, :]
-                    L0_values = L0_values[L0_values[:, 0] != 0, :]
+
+                # fill the zeros with a very tiny value
+                L0_values[L0_values[:, 0] == 0, :] = tiny_value
 
                 if len(L0_points)>4:
                     grid = griddata(L0_points, L0_values, (XC_subset, YC_subset), method='linear',fill_value=0)
@@ -949,6 +964,16 @@ def downscale_3D_field_with_interpolation_mask(L0_XC, L0_YC, L0_var, L0_wet_grid
                     # print('        - Filling in point at location '+str(k)+','+str(spread_rows[ri])+','+str(spread_cols[ri])+\
                     #       ' with point at location '+str(source_level)+','+str(source_row)+','+str(source_col)+' (value = '+str(value)+')')
                     grid[spread_rows[ri], spread_cols[ri]] = value
+
+                # if there's any that were filled from above, then fill em
+                downward_rows, downward_cols = np.where(L1_interpolation_mask[k, :, :] == 3)
+                for ri in range(len(downward_rows)):
+                    source_level = L1_source_levels[k, downward_rows[ri], downward_cols[ri]]
+                    value = full_grid[source_level, source_row, source_col]
+                    grid[downward_rows[ri], downward_cols[ri]] = value
+
+                # now, add the end of it, make all of the tiny values actually 0
+                grid[np.abs(grid) <= 2 * tiny_value] = 0
 
             else:
                 grid = np.zeros_like(XC_subset).astype(float)
@@ -1123,7 +1148,7 @@ def downscale_3D_points_with_zeros(L0_points, L0_var, L0_wet_grid, #L0_wet_grid_
 
     tiny_value = 1e-14
 
-    for k in range(np.shape(L0_var)[0]):
+    for k in range(np.shape(L1_wet_grid)[0]):
 
         continue_to_interpolation = True
 
@@ -1186,6 +1211,89 @@ def downscale_3D_points_with_zeros(L0_points, L0_var, L0_wet_grid, #L0_wet_grid_
         full_grid[k, :, :] = grid[:, :]
 
     return(full_grid)
+
+def downscale_3D_points_with_interpolation_mask(L0_points, L0_var, L0_wet_grid,
+                                               XC_subset, YC_subset, L1_wet_grid,
+                                               L1_interpolation_mask, L1_source_rows, L1_source_cols, L1_source_levels,
+                                               printing=False, testing = False):
+
+    # full_grid = np.zeros_like(L1_wet_grid).astype(float)
+    full_grid = np.zeros((np.shape(L1_wet_grid)[0],np.shape(XC_subset)[0],np.shape(XC_subset)[1]))
+    all_L0_points = np.copy(L0_points)
+
+    if testing:
+        K=1
+    else:
+        K=np.shape(L1_wet_grid)[0]
+
+    for k in range(K):
+
+        continue_to_interpolation = True
+
+        tiny_value = 1e-14
+
+        if continue_to_interpolation:
+            if printing:
+                print('                - Working on level ' + str(k) + ' of ' + str(np.shape(L1_wet_grid)[0])+' ('+str(np.sum(L1_wet_grid[k, :, :] > 0))+' nonzero points found)')
+            if np.any(L1_wet_grid[k, :, :] > 0):
+                # take an initial stab at the interpolation
+                L0_points = np.copy(all_L0_points)
+                L0_values = np.reshape(L0_var[k, :], (np.size(L0_var[k, :]),))
+                L0_wet_grid_vert = np.reshape(L0_wet_grid[k, :], (np.size(L0_wet_grid[k, :]),))
+                L0_points = L0_points[L0_wet_grid_vert != 0, :]
+                L0_values = L0_values[L0_wet_grid_vert != 0]
+
+                # fill the zeros with a very tiny value
+                L0_values[L0_values == 0] = tiny_value
+
+                if len(L0_points)>4:
+                    grid = griddata(L0_points, L0_values, (XC_subset, YC_subset), method='linear',fill_value=0)
+                    # grid_nearest = griddata(L0_points, L0_values, (XC_subset, YC_subset), method='nearest', fill_value=0)
+                    # grid_nearest[:,:,0]
+                    if not np.any(grid!=0):
+                        grid = griddata(L0_points, L0_values, (XC_subset, YC_subset), method='nearest', fill_value=0)
+                else:
+                    grid = np.zeros_like(XC_subset).astype(float)
+
+                # if k==0:
+                #     plt.imshow(grid,origin='lower')
+                #     plt.show()
+
+                # mask out any values which should be 0'd based on the interpolation mask
+                grid[L1_interpolation_mask[k, :, :] != 1] = 0
+
+                # in this level, spread points where they should be spread
+                spread_rows, spread_cols = np.where(L1_interpolation_mask[k,:,:]==2)
+                for ri in range(len(spread_rows)):
+                    source_row = L1_source_rows[k,spread_rows[ri],spread_cols[ri]]
+                    source_col = L1_source_cols[k, spread_rows[ri], spread_cols[ri]]
+                    source_level = L1_source_levels[k, spread_rows[ri], spread_cols[ri]]
+                    if source_level !=k:
+                         value = full_grid[source_level,source_row,source_col]
+                    else:
+                        value = grid[source_row,source_col]
+
+                    # print('        - Filling in point at location '+str(k)+','+str(spread_rows[ri])+','+str(spread_cols[ri])+\
+                    #       ' with point at location '+str(source_level)+','+str(source_row)+','+str(source_col)+' (value = '+str(value)+')')
+                    grid[spread_rows[ri], spread_cols[ri]] = value
+
+                # if there's any that were filled from above, then fill em
+                downward_rows, downward_cols = np.where(L1_interpolation_mask[k, :, :] == 3)
+                for ri in range(len(downward_rows)):
+                    source_level = L1_source_levels[k, downward_rows[ri], downward_cols[ri]]
+                    value = full_grid[source_level, source_row, source_col]
+                    grid[downward_rows[ri], downward_cols[ri]] = value
+
+                # now, add the end of it, make all of the tiny values actually 0
+                grid[np.abs(grid) <= 2 * tiny_value] = 0
+
+            else:
+                grid = np.zeros_like(XC_subset).astype(float)
+
+        full_grid[k, :, :] = grid[:, :]
+
+    return(full_grid)
+
 
 
 def downscale_2D_points_with_zeros(L0_points, L0_var, L0_wet_grid,

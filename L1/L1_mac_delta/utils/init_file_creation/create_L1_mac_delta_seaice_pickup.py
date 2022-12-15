@@ -8,28 +8,22 @@ import sys
 import ast
 
 
-def create_exfs(config_dir, ecco_dir, print_level):
+def create_seaice_pickup(config_dir, ecco_dir, print_level):
 
-    L1_model_name = 'L1_GOM'
+    L1_model_name = 'L1_mac_delta'
 
     sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
 
-    start_year = 1992
-    start_month = 1
+    parent_model_pickup_iteration = 73
 
-    final_year = 1992
-    final_month = 1
+    llc = 270
+    ordered_ecco_tiles = [[73, 82, 91], [60, 63, 63]]
+    ordered_ecco_tile_rotations = [[1, 1, 1], [1, 1, 2]]
 
-    # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
-    import create_L1_exf_field_ref as ebcr
-    ebcr.create_L1_exf_ref_file(config_dir, L1_model_name, print_level)
-
-    proc_ids = np.arange(10).tolist()
-
-    import create_L1_monthly_exfs as cef
-    for proc_id in proc_ids:
-        cef.create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
-                                 start_year, final_year, start_month, final_month, print_level)
+    import create_L1_seaice_pickup as cp
+    cp.create_L1_seaice_pickup_file(config_dir, L1_model_name,
+                               ecco_dir, llc, ordered_ecco_tiles, ordered_ecco_tile_rotations,
+                               parent_model_pickup_iteration, print_level)
 
 
 if __name__ == '__main__':
@@ -48,6 +42,6 @@ if __name__ == '__main__':
     config_dir = args.config_dir
     ecco_dir = args.ecco_dir
 
-    create_exfs(config_dir, ecco_dir, print_level=5)
+    create_seaice_pickup(config_dir, ecco_dir, print_level=4)
    
 

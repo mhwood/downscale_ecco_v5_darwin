@@ -1,5 +1,4 @@
 cd ../
-mkdir run_for_grid
 rm -r run_for_grid/mnc_*
 rm run_for_grid/*
 cd run_for_grid

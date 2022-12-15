@@ -251,9 +251,12 @@ def create_L1_ptracer_pickup_file(config_dir, model_name,
             mean_vertical_difference = 0
             subset_copy = np.copy(ecco_grid)
 
-            # if var_name.lower() not in ['etan', 'detahdt', 'etah']:
-            #     ecco_grid, ecco_wet_cells = df.interpolate_var_grid_faces_to_new_depth_levels(
-            #         ecco_grid, ecco_wet_cells, ecco_delR, delR)
+            ecco_delR = np.array(ecco_delR)
+            delR = np.array(delR)
+
+            if len(ecco_delR)!=len(delR):
+                ecco_grid, ecco_wet_cells = df.interpolate_var_grid_faces_to_new_depth_levels(
+                    ecco_grid, ecco_wet_cells, ecco_delR, delR)
             # print('     - Skipping the vertical interpolation')
 
             # # plt.subplot(1,2,1)
@@ -281,7 +284,7 @@ def create_L1_ptracer_pickup_file(config_dir, model_name,
                                                                          L1_interpolation_mask, L1_source_rows,
                                                                          L1_source_cols, L1_source_levels,
                                                                          mean_vertical_difference=0, fill_downward=True,
-                                                                         remove_zeros=True, printing=printing, testing= True)
+                                                                         remove_zeros=True, printing=printing, testing= False)
 
             if np.sum(np.isnan(interp_field))>0:
                 raise ValueError('Found nans in the pickup grid...')

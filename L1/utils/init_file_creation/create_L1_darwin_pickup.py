@@ -193,6 +193,9 @@ def create_L1_darwin_pickup_file(config_dir, model_name,
     ecco_XC, ecco_YC, _, _, ecco_hfacC, ecco_delR = \
         ef.read_ecco_grid_geometry(ecco_dir, llc, ordered_ecco_tiles, ordered_ecco_tile_rotations)
 
+    if model_name == 'L1_mac_delta':
+        ecco_XC += 360
+
     # C = plt.imshow(ecco_AngleSN, origin='lower')
     # plt.colorbar(C)
     # plt.show()
@@ -200,11 +203,8 @@ def create_L1_darwin_pickup_file(config_dir, model_name,
     if print_level>=1:
         print('    - Reading in the ECCO pickup file')
     pickup_file = 'pickup_darwin.'+'{:010d}'.format(parent_model_pickup_iteration)
-    pickup_file_path = os.path.join(config_dir,'L0','run_darwin',pickup_file)
+    pickup_file_path = os.path.join(config_dir,'L0','run',pickup_file)
     var_names, var_grids, global_metadata = ef.read_ecco_darwin_pickup_to_stiched_grid(pickup_file_path, ordered_ecco_tiles, ordered_ecco_tile_rotations)
-
-    for vn in range(len(var_names)):
-        print(var_names[vn],np.shape(var_grids[vn]))
 
     # C = plt.imshow(var_grids[0][0,:,:], origin='lower',vmin=-0.5,vmax=0.5,cmap='seismic')
     # plt.colorbar(C)
@@ -212,12 +212,6 @@ def create_L1_darwin_pickup_file(config_dir, model_name,
 
     ecco_wet_cells = np.copy(ecco_hfacC)
     ecco_wet_cells[ecco_wet_cells>0]=1
-
-    if use_interpolation_grids:
-        L1_interpolation_mask, L1_source_rows, L1_source_cols, L1_source_levels = \
-            read_interpolation_grid(df, config_dir, model_name, var_name,
-                                    ecco_XC, ecco_YC, ecco_wet_cells, ecco_wet_cells_on_tile_domain,
-                                    XC, YC, print_level)
 
     # make some bins where the tiles will be stored
     interp_grids = []
@@ -239,6 +233,12 @@ def create_L1_darwin_pickup_file(config_dir, model_name,
 
             domain_wet_cells_3D = read_grid_mask(config_dir,model_name,var_name)
 
+            if use_interpolation_grids:
+                L1_interpolation_mask, L1_source_rows, L1_source_cols, L1_source_levels = \
+                    read_interpolation_grid(df, config_dir, model_name, var_name,
+                                            ecco_XC, ecco_YC, ecco_wet_cells, ecco_wet_cells_on_tile_domain,
+                                            XC, YC, print_level)
+
             # plt.subplot(1, 3, 1)
             # plt.imshow(ecco_wet_cells[0, :, :], origin='lower')
             # plt.subplot(1, 3, 2)
@@ -247,13 +247,10 @@ def create_L1_darwin_pickup_file(config_dir, model_name,
             # plt.imshow(domain_wet_cells_3D[0, :, :], origin='lower')
             # plt.show()
 
-            mean_vertical_difference = 0
-            subset_copy = np.copy(ecco_grid)
-
-            # if var_name.lower() not in ['etan', 'detahdt', 'etah']:
-            #     ecco_grid, ecco_wet_cells = df.interpolate_var_grid_faces_to_new_depth_levels(
-            #         ecco_grid, ecco_wet_cells, ecco_delR, delR)
-            # print('     - Skipping the vertical interpolation')
+            ecco_delR = np.array(ecco_delR)
+            delR = np.array(delR)
+            ecco_grid, ecco_wet_cells = df.interpolate_var_grid_faces_to_new_depth_levels(
+                ecco_grid, ecco_wet_cells, ecco_delR, delR)
 
             # # plt.subplot(1,2,1)
             # # plt.imshow(subset_copy[:,10,:])
@@ -278,7 +275,7 @@ def create_L1_darwin_pickup_file(config_dir, model_name,
                                                                              mean_vertical_difference=0,
                                                                              fill_downward=True,
                                                                              remove_zeros=True, printing=printing,
-                                                                             testing=True)
+                                                                             testing=False)
             else:
                 interp_field = df.downscale_3D_field(ecco_XC, ecco_YC,
                                                      ecco_grid, ecco_wet_cells,
@@ -311,8 +308,6 @@ def create_L1_darwin_pickup_file(config_dir, model_name,
     if print_level >= 1:
         print('    - Stacking the interpolated fields into a pickup grid')
     pickup_grid = stack_grids_to_pickup(interp_grids,var_names)
-
-    print(np.shape(pickup_grid))
 
     if print_level >= 1:
         print('    - Outputting the compact pickup grid to the input directory')

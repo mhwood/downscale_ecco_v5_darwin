@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,22 +7,21 @@ import sys
 import ast
 
 
-def create_pickup(config_dir, ecco_dir, print_level):
+def create_darwin_pickup(config_dir, ecco_dir, print_level):
+    L1_model_name = 'L1_GOM'
 
-    L1_model_name = 'L1_East_Pacific'
-
-    sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
+    sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils', 'init_file_creation'))
 
     parent_model_pickup_iteration = 73
 
     llc = 270
-    ordered_ecco_tiles = [[84, 93],[83, 92]]
-    ordered_ecco_tile_rotations = [[1,1], [1,1]]
+    ordered_ecco_tiles = [[93, 102]]
+    ordered_ecco_tile_rotations = [[1, 1]]
 
-    import create_L1_pickup as cp
-    cp.create_L1_ECCO_pickup_file(config_dir, L1_model_name,
-                               ecco_dir, llc, ordered_ecco_tiles, ordered_ecco_tile_rotations,
-                               parent_model_pickup_iteration, print_level)
+    import create_L1_darwin_pickup as cp
+    cp.create_L1_darwin_pickup_file(config_dir, L1_model_name,
+                                     ecco_dir, llc, ordered_ecco_tiles, ordered_ecco_tile_rotations,
+                                     parent_model_pickup_iteration, print_level)
 
 
 if __name__ == '__main__':
@@ -37,11 +35,10 @@ if __name__ == '__main__':
                         help="The directory where ECCO files are stored.", dest="ecco_dir",
                         type=str, required=True)
 
-
     args = parser.parse_args()
     config_dir = args.config_dir
     ecco_dir = args.ecco_dir
 
-    create_pickup(config_dir, ecco_dir, print_level=4)
-   
+    create_darwin_pickup(config_dir, ecco_dir, print_level=4)
+
 

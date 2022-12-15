@@ -4,6 +4,7 @@ import argparse
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import netCDF4 as nc4
 import cmocean.cm as cm
 
 
@@ -37,6 +38,37 @@ def read_boundary_condition(config_dir, L1_model_name, boundary, field_name, n_r
     boundary_grid = boundary_grid[day-1,:,:]
 
     return(boundary_grid)
+
+def read_boundary_masks(config_dir, L1_model_name, boundaries):
+    C_masks = []
+    W_masks = []
+    S_masks = []
+
+    ds = nc4.Dataset(os.path.join(config_dir,'nc_grids',L1_model_name+'_grid.nc'))
+    HFacC = ds.variables['HFacC'][:, :, :]
+    HFacS = ds.variables['HFacS'][:, :, :]
+    HFacW = ds.variables['HFacW'][:, :, :]
+    ds.close()
+
+    for boundary in boundaries:
+        if boundary=='north':
+            C_masks.append(HFacC[:,-1, :])
+            S_masks.append(HFacS[:, -2, :])
+            W_masks.append(HFacW[:, -1, :])
+        if boundary=='west':
+            C_masks.append(HFacC[:, :, 0])
+            S_masks.append(HFacS[:, :, 0])
+            W_masks.append(HFacW[:, :, 1])
+        if boundary=='south':
+            C_masks.append(HFacC[:, 0, :])
+            S_masks.append(HFacS[:, 1, :])
+            W_masks.append(HFacW[:, 0, :])
+        if boundary=='east':
+            C_masks.append(HFacC[:, :, -1])
+            S_masks.append(HFacS[:, :, -1])
+            W_masks.append(HFacW[:, :, -2])
+
+    return(C_masks,W_masks,S_masks)
 
 def tracer_number_to_metadata(tracer_number):
     tracer_dict = {1:['DIC','$\mu$M C',cm.amp_r],
@@ -73,67 +105,93 @@ def tracer_number_to_metadata(tracer_number):
     return(tracer_dict[tracer_number])
 
 def create_2D_BC_plot(config_dir, L1_model_name, var_name,
-                      boundaries, boundary_grids,year, month, day):
+                      boundaries, boundary_grids,year, month, day,
+                      C_masks, W_masks, S_masks):
 
-    # min_val = np.min([np.min(north_boundary[north_boundary!=0]),
-    #                   np.min(south_boundary[south_boundary!=0]),
-    #                   np.min(east_boundary[east_boundary!=0]),
-    #                   np.min(west_boundary[west_boundary!=0])])
-    #
-    # max_val = np.max([np.max(north_boundary[north_boundary != 0]),
-    #                   np.max(south_boundary[south_boundary != 0]),
-    #                   np.max(east_boundary[east_boundary != 0]),
-    #                   np.max(west_boundary[west_boundary != 0])])
+    min_val = 1e22
+    max_val = -1e22
+    for bn in range(len(boundaries)):
+        boundary_grid = boundary_grids[bn]
+
+        if np.min(boundary_grid[boundary_grid != 0]) < min_val:
+            min_val = np.min(boundary_grid[boundary_grid != 0])
+        if np.max(boundary_grid[boundary_grid != 0]) > max_val:
+            max_val = np.max(boundary_grid[boundary_grid != 0])
+
+    if min_val<max_val:
+        val_range = max_val-min_val
+    else:
+        val_range = 0.1
 
     vmin = -0.5
     vmax = 0.5
 
-    if var_name=='AREA':
-        vmin=-0.05
-        vmax=1.05
-    if var_name=='HEFF':
+    if var_name=='UICE':
+        title_var_name = 'Zonal Seaice Ice Velocity'
+        units = 'm/s'
+    if var_name=='VICE':
+        title_var_name = 'Meridional Seaice Ice Velocity'
+        units = 'm/s'
+
+    if var_name == 'AREA':
+        vmin = -0.05
+        vmax = 1.05
+        title_var_name = 'Sea Ice Area'
+        units = 'm$^2$/m$^2$'
+    if var_name == 'HEFF':
         vmin = -0.05
         vmax = 3
-    if var_name=='HSNOW':
+        title_var_name = 'Sea Ice Effective Thickness'
+        units = 'm'
+    if var_name == 'HSNOW':
         vmin = -0.05
         vmax = 2
+        title_var_name = 'Sea Ice Snow Effective Thickness'
+        units = 'm'
 
     fig = plt.figure(figsize=(8, 10))
     plt.style.use('dark_background')
 
-    plt.subplot(4, 1, 1)
-    C = plt.plot(north_boundary.ravel())
-    plt.grid(linestyle='--',alpha=0.5)
-    plt.ylabel('North')
-    plt.title(var_name+' Boundary Conditions at timestep = '+str(timestep))
-    plt.gca().set_ylim([vmin,vmax])
+    for bn in range(len(boundaries)):
 
-    plt.subplot(4, 1, 2)
-    C = plt.plot(south_boundary.ravel())
-    plt.grid(linestyle='--', alpha=0.5)
-    plt.ylabel('South')
-    plt.gca().set_ylim([vmin, vmax])
+        plt.subplot(len(boundaries), 1, bn + 1)
+        d = np.arange(np.shape(boundary_grids[bn])[1])
 
-    plt.subplot(4, 1, 3)
-    C = plt.plot(west_boundary.ravel())
-    plt.grid(linestyle='--', alpha=0.5)
-    plt.ylabel('West')
-    plt.gca().set_ylim([vmin, vmax])
+        if var_name == 'VICE':
+            mask = S_masks[bn]
+        elif var_name == 'UICE':
+            mask = W_masks[bn]
+        else:
+            mask = C_masks[bn]
+        mask = mask[:1, :np.shape(boundary_grids[bn])[1]]
 
-    plt.subplot(4, 1, 4)
-    C = plt.plot(east_boundary.ravel())
-    plt.grid(linestyle='--', alpha=0.5)
-    plt.ylabel('East')
-    plt.xlabel('Points Along Boundary')
-    plt.gca().set_ylim([vmin, vmax])
+        plot_line = boundary_grids[bn].ravel()
+        plot_line[mask.ravel()==0] = np.nan
+        plt.plot(d, plot_line)
 
-    output_file = os.path.join(config_dir,'L1_grid',L1_model_name,'plots','init_files',L1_model_name+'_BC_'+var_name+'_'+str(timestep)+'.png')
+        plt.gca().set_ylim([min_val-0.1*val_range, max_val+0.1*val_range])
+
+        # mask_grid = np.ma.masked_where(mask != 0, mask)
+        # plt.pcolormesh(X, D, mask_grid, cmap="Greys", vmin=-1, vmax=1, shading='nearest')
+
+        plt.grid(linestyle='--',linewidth=0.5, alpha=0.5)
+
+        plt.ylabel(boundaries[bn].capitalize() + ' Boundary\n('+units+')')
+        if bn == 0:
+            plt.title(title_var_name + ' Boundary Conditions on date ' + str(year) + '/' + str(month) + '/' + str(day))
+
+        if bn == len(boundaries) - 1:
+            plt.xlabel('Points Along Boundary')
+
+    output_file = os.path.join(config_dir, 'L1', L1_model_name, 'plots', 'init_files', 'BCs',
+                               L1_model_name + '_BC_' + var_name + '_' + str(year) + '{:02d}'.format(
+                                   month) + '{:02d}'.format(day) + '.png')
     plt.savefig(output_file)
     plt.close(fig)
 
-
 def create_3D_BC_plot(config_dir, L1_model_name, var_name,
-                      boundaries, boundary_grids,year, month, day):
+                      boundaries, boundary_grids,year, month, day,
+                      C_masks, W_masks, S_masks):
 
     min_val = 1e22
     max_val = -1e22
@@ -187,8 +245,18 @@ def create_3D_BC_plot(config_dir, L1_model_name, var_name,
         x = np.arange(np.shape(boundary_grids[bn])[1])
         d = np.arange(np.shape(boundary_grids[bn])[0])
         X, D = np.meshgrid(x,d)
-        plot_grid = np.ma.masked_where(boundary_grids[bn]==0,boundary_grids[bn])
-        C = plt.pcolormesh(X, D, plot_grid, cmap=cmap, vmin=vmin, vmax=vmax, shading='nearest')
+        C = plt.pcolormesh(X, D, boundary_grids[bn], cmap=cmap, vmin=vmin, vmax=vmax, shading='nearest')
+
+        if var_name=='VVEL':
+            mask = S_masks[bn]
+        elif var_name=='UVEL':
+            mask = W_masks[bn]
+        else:
+            mask = C_masks[bn]
+        mask = mask[:,:np.shape(boundary_grids[bn])[1]]
+        mask_grid = np.ma.masked_where(mask != 0, mask)
+        plt.pcolormesh(X, D, mask_grid, cmap="Greys", vmin=-1, vmax=1, shading='nearest')
+
         cbar = plt.colorbar(C)
         cbar.set_label(units)
         plt.gca().invert_yaxis()
@@ -199,7 +267,7 @@ def create_3D_BC_plot(config_dir, L1_model_name, var_name,
         if bn==len(boundaries)-1:
             plt.xlabel('Points Along Boundary')
 
-    output_file = os.path.join(config_dir,'L1',L1_model_name,'plots','init_files',
+    output_file = os.path.join(config_dir,'L1',L1_model_name,'plots','init_files','BCs',
                                L1_model_name+'_BC_'+var_name+'_'+str(year)+'{:02d}'.format(month)+'{:02d}'.format(day)+'.png')
     plt.savefig(output_file)
     plt.close(fig)
@@ -212,6 +280,8 @@ def plot_L1_BCs(config_dir, L1_model_name, boundaries, Nr, n_rows, n_cols, year,
         os.mkdir(os.path.join(config_dir,'L1',L1_model_name,'plots'))
     if 'init_files' not in os.listdir(os.path.join(config_dir,'L1',L1_model_name,'plots')):
         os.mkdir(os.path.join(config_dir,'L1',L1_model_name,'plots','init_files'))
+    if 'BCs' not in os.listdir(os.path.join(config_dir, 'L1', L1_model_name, 'plots', 'init_files')):
+        os.mkdir(os.path.join(config_dir, 'L1', L1_model_name, 'plots', 'init_files','BCs'))
 
     if L1_model_name in ['L1_W_Greenland', 'L1_mac_delta']:
         var_names = ['THETA', 'SALT', 'UVEL', 'VVEL', 'UICE', 'VICE', 'HSNOW', 'HEFF', 'AREA']
@@ -219,6 +289,8 @@ def plot_L1_BCs(config_dir, L1_model_name, boundaries, Nr, n_rows, n_cols, year,
         var_names = ['THETA', 'SALT', 'UVEL', 'VVEL']
     for p in range(1,32):
         var_names.append('PTRACE'+'{:02d}'.format(p))
+
+    C_masks, W_masks, S_masks = read_boundary_masks(config_dir, L1_model_name, boundaries)
 
     for var_name in var_names:
         print('    - Plotting the '+var_name +' boundary conditions')
@@ -236,10 +308,12 @@ def plot_L1_BCs(config_dir, L1_model_name, boundaries, Nr, n_rows, n_cols, year,
 
         if var_name in ['AREA','HEFF','HSNOW','UICE','VICE']:
             create_2D_BC_plot(config_dir, L1_model_name, var_name,
-                              boundaries, boundary_grids,year, month, day)
+                              boundaries, boundary_grids, year, month, day,
+                              C_masks, W_masks, S_masks)
         else:
             create_3D_BC_plot(config_dir, L1_model_name, var_name,
-                              boundaries, boundary_grids,year, month, day)
+                              boundaries, boundary_grids,year, month, day,
+                              C_masks, W_masks, S_masks)
 
 
 

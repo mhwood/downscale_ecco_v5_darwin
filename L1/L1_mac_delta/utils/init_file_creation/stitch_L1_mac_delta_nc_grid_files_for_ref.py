@@ -43,8 +43,8 @@ def read_L1_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_non
                     YC = ds.variables['YC'][:, :]
                     XG = ds.variables['XG'][:, :]
                     YG = ds.variables['YG'][:, :]
-                    # AngleCS = ds.variables['AngleCS'][:, :]
-                    # AngleSN = ds.variables['AngleSN'][:, :]
+                    AngleCS = ds.variables['AngleCS'][:, :]
+                    AngleSN = ds.variables['AngleSN'][:, :]
                     DXC = ds.variables['dxC'][:, :]
                     DYC = ds.variables['dyC'][:, :]
                     hFacC = ds.variables['HFacC'][:, :, :]
@@ -63,8 +63,8 @@ def read_L1_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_non
                         YC = np.rot90(YC)
                         XG = np.rot90(XG)
                         YG = np.rot90(YG)
-                        # AngleCS = np.rot90(AngleCS)
-                        # AngleSN = np.rot90(AngleSN)
+                        AngleCS = np.rot90(AngleCS)
+                        AngleSN = np.rot90(AngleSN)
 
                         Depth = np.rot90(Depth)
                         rA = np.rot90(rA)
@@ -82,8 +82,8 @@ def read_L1_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_non
                     stitched_XG[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = XG
                     stitched_YG[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = YG
 
-                    # stitched_AngleCS[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = AngleCS
-                    # stitched_AngleSN[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = AngleSN
+                    stitched_AngleCS[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = AngleCS
+                    stitched_AngleSN[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = AngleSN
 
                     stitched_DXC[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx+1] = DXC
                     stitched_DYC[r * sNy:(r + 1) * sNy+1, c * sNx:(c + 1) * sNx] = DYC

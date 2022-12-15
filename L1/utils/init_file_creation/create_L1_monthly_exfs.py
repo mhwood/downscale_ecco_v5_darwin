@@ -37,6 +37,31 @@ def read_grid_geometry(config_dir,model_name,var_name):
 
     return(XC, YC, AngleCS, AngleSN, HFac, delR)
 
+def read_interpolation_grid(config_dir, model_name, var_name):
+
+    interpolation_grid_file = model_name+'_interpolation_grid.nc'
+
+    if interpolation_grid_file not in os.listdir(os.path.join(config_dir,'nc_grids')):
+
+        raise ValueError('Need to generate the interpolation grid using one of the pickup scripts')
+
+    ds = nc4.Dataset(os.path.join(config_dir,'nc_grids',interpolation_grid_file))
+    if var_name in ['Vvel','SIvice','siVICE','VWIND','VSTRESS']:
+        grp = ds.groups['S']
+    elif var_name in ['Uvel','SIuice','siUICE','UWIND','USTRESS']:
+        grp = ds.groups['W']
+    else:
+        grp = ds.groups['C']
+
+    interpolation_type_grid = grp.variables['interp_type'][:,:,:]
+    source_rows_grid = grp.variables['source_rows'][:, :, :]
+    source_cols_grid = grp.variables['source_cols'][:, :, :]
+    source_levels_grid = grp.variables['source_levels'][:,:,:]
+
+    ds.close()
+
+    return(interpolation_type_grid, source_rows_grid, source_cols_grid, source_levels_grid)
+
 def create_src_dest_dicts_from_ref(config_dir, L1_model_name, var_name, start_year, final_year, start_month, final_month):
     dest_files = []
     start_date = datetime(start_year, start_month, 1)
@@ -155,7 +180,7 @@ def read_L0_surface_variable_points(L0_run_dir, model_name, var_name,
     return(points,values,hfac_points)
 
 def create_exf_field(config_dir, ecco_dir, model_name, var_name,
-                     dest_files, source_file_read_dict, source_file_read_index_sets, print_level):
+                     dest_files, source_file_read_dict, source_file_read_index_sets, print_level, use_interpolation_grids = True):
 
     sys.path.insert(1, os.path.join(config_dir, 'utils', 'init_file_creation'))
     import downscale_functions as df
@@ -195,10 +220,8 @@ def create_exf_field(config_dir, ecco_dir, model_name, var_name,
     cols = grp.variables['source_cols'][:]
     ds.close()
 
-
-
     ####################################################################################################################
-    # Loop through the daily files
+    # Loop through the monthly files
 
     for dest_file in dest_files:
         if dest_file not in []:#os.listdir(os.path.join(config_dir, 'L1', model_name, 'input', 'exf', var_name)):
@@ -245,9 +268,13 @@ def create_exf_field(config_dir, ecco_dir, model_name, var_name,
             # plt.plot(L1_XC,L1_YC,'k.')
             # plt.show()
 
-            for timestep in range(1):#np.shape(L0_surface_values)[0]):
-                # if timestep%50 == 0:
-                #     print('        - Downscaling timestep '+str(timestep))
+            if use_interpolation_grids:
+                L1_interpolation_mask, L1_source_rows, L1_source_cols, L1_source_levels = \
+                    read_interpolation_grid(config_dir, model_name, var_name)
+
+            for timestep in range(np.shape(L0_surface_values)[0]):
+                if timestep%50 == 0:
+                    print('        - Downscaling timesteps '+str(timestep)+' to '+str(np.min([timestep+50,np.shape(L0_surface_values)[0]])))
 
                 if print_level >= 5:
                     if timestep == 0:
@@ -260,13 +287,23 @@ def create_exf_field(config_dir, ecco_dir, model_name, var_name,
                         print('                - L1_mask shape: ' + str(np.shape(L1_mask)))
                         print('                - output_grid shape: ' + str(np.shape(output_grid)))
 
-                interp_field = df.downscale_3D_points_with_zeros(L0_surface_points,
-                                                                 L0_surface_values[timestep, :, :],
-                                                                 L0_surface_mask,
-                                                                 L1_XC, L1_YC, L1_mask,
-                                                                 mean_vertical_difference=0,
-                                                                 fill_downward=True,
-                                                                 printing=False)
+                if use_interpolation_grids:
+                    interp_field = df.downscale_3D_points_with_interpolation_mask(L0_surface_points,
+                                                                                  L0_surface_values[timestep, :, :],
+                                                                                  L0_surface_mask,
+                                                                                  L1_XC, L1_YC, L1_mask,
+                                                                                  L1_interpolation_mask, L1_source_rows,
+                                                                                  L1_source_cols, L1_source_levels,
+                                                                                  printing=False,
+                                                                                  testing=False)
+                else:
+                    interp_field = df.downscale_3D_points_with_zeros(L0_surface_points,
+                                                                     L0_surface_values[timestep, :, :],
+                                                                     L0_surface_mask,
+                                                                     L1_XC, L1_YC, L1_mask,
+                                                                     mean_vertical_difference=0,
+                                                                     fill_downward=True,
+                                                                     printing=False)
 
                 output_grid[timestep, :, :] = interp_field[0, :, :]
 
@@ -280,7 +317,7 @@ def create_exf_field(config_dir, ecco_dir, model_name, var_name,
 
 
 def create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
-                      start_year, final_year, start_month, final_month, print_level):
+                      start_year, final_year, start_month, final_month, print_level, use_interpolation_grids = True):
 
     var_names = ['ATEMP', 'AQH', 'LWDOWN', 'SWDOWN', 'UWIND', 'VWIND', 'PRECIP','RUNOFF','ATMOSCO2','IRONDUST']
     var_name = var_names[proc_id % len(var_names)]
@@ -294,7 +331,7 @@ def create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
 
     print('  Running the Downscale routine:')
     create_exf_field(config_dir, ecco_dir,  L1_model_name, var_name,
-                     dest_files, source_file_read_dict, source_file_read_index_sets, print_level)
+                     dest_files, source_file_read_dict, source_file_read_index_sets, print_level,use_interpolation_grids)
 
 if __name__ == '__main__':
 

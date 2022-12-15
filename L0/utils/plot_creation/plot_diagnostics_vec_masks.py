@@ -61,7 +61,7 @@ def read_proc_counter_to_tiles(tile_proc_file,tiles):
 def read_masks_to_tiles(mask_dir,llc,mask_names):
     mask_sets = []
     for mask_name in mask_names:
-        mask_file = os.path.join(mask_dir,mask_name+'.bin')
+        mask_file = os.path.join(mask_dir,mask_name)
         mask_tiles = read_bathy_to_tiles(mask_file,llc)
         mask_sets.append(mask_tiles)
     return(mask_sets)
@@ -89,6 +89,8 @@ def create_plot(output_file,tiles,llc,mask_names,mask_set):
 
     mask_colors = ['red','orange','green','purple']
 
+    proc_counter = 0
+
     for tile_number in range(len(tiles)):
         row = tile_to_subplot[tile_number+1][0]
         col = tile_to_subplot[tile_number+1][1]
@@ -105,6 +107,17 @@ def create_plot(output_file,tiles,llc,mask_names,mask_set):
                 plot_row,plot_col = np.where(mask_subset>0)
                 for ri in range(len(plot_row)):
                     plt.plot(plot_col[ri],plot_row[ri],'.',color=mask_colors[mi],markersize=2)
+
+        for proc_row in range(3):
+            for proc_col in range(3):
+                proc_counter+=1
+                plt.text(proc_col*90+45,proc_row*90+45,str(proc_counter),fontsize=14,color='k',va='center',ha='center')
+                plt.text(proc_col * 90 + 45, proc_row * 90 + 45, str(proc_counter),fontsize=11,va='center',ha='center')
+
+        plt.plot([90,90],[0,270],'k-')
+        plt.plot([180, 180], [0, 270],'k-')
+        plt.plot([0, 270],[90, 90],  'k-')
+        plt.plot([0, 270],[180, 180],  'k-')
 
         plt.gca().set_xlim([0, llc])
         plt.gca().set_ylim([0, llc])
@@ -135,17 +148,23 @@ def plot_dv_masks(ecco_path,model_names):
     for tile in tiles:
         tile[tile>0]=0
 
+    mask_dir = os.path.join('..', 'input','dv')
+
     for model_name in model_names:
 
         mask_names = []
         for boundary in ['north','south','east','west']:
+            file_name = model_name+'_'+boundary+'.bin'
+            if file_name in os.listdir(mask_dir):
+                mask_names.append(model_name+'_'+boundary+'.bin')
 
+        mask_set = read_masks_to_tiles(mask_dir,llc,mask_names)
+        output_file = os.path.join('..', 'plots', model_name+'_boundary_dv_masks.png')
+        create_plot(output_file,tiles,llc,mask_names,mask_set)
 
-        mask_dir = os.path.join('..','input')
-        mask_set = read_masks_to_tiles(mask_dir,llc,[mask_name])
-
-        output_file = os.path.join('..', 'plots', mask_name+'_dv_mask.png')
-        create_plot(output_file,tiles,llc,[mask_name],mask_set)
+        mask_set = read_masks_to_tiles(mask_dir, llc, [model_name+'_surf.bin'])
+        output_file = os.path.join('..', 'plots', model_name + '_surface_dv_mask.png')
+        create_plot(output_file, tiles, llc, [model_name+'_surface_mask'], mask_set)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

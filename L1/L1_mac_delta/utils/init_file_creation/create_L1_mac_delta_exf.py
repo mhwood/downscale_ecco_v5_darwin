@@ -3,7 +3,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from pyproj import Transformer
 import sys
 import ast
 
