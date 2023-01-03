@@ -1,0 +1,11 @@
+# Packages
+ &PACKAGES
+ useCAL         = .TRUE.,
+ useEXF         = .TRUE.,
+ useDiagnostics = .TRUE.,
+ useKPP         = .TRUE.,
+ useGCHEM       = .TRUE.,
+ useOBCS        = .TRUE.,
+ usePTRACERS    = .TRUE.,
+ useSALT_PLUME  = .TRUE.,
+ &

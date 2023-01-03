@@ -53,7 +53,7 @@ def copy_files(config_dir, github_dir):
                     if dir_name not in os.listdir(os.path.join(github_dir, level_name, model_name,'utils')):
                         os.mkdir(os.path.join(github_dir, level_name, model_name, 'utils', dir_name))
                     for file_name in os.listdir(os.path.join(config_dir, level_name, model_name, 'utils',dir_name)):
-                        if file_name[0] != '.' and file_name[-3:]=='.py' and file_name[0] != '_' and file_name!='init_files':
+                        if file_name[0] != '.' and file_name[-3:]=='.py' and file_name[0] != '_' and file_name!='init_files' and file_name!='results':
                             shutil.copyfile(os.path.join(config_dir, level_name, model_name, 'utils',dir_name, file_name),
                                             os.path.join(github_dir, level_name, model_name, 'utils',dir_name, file_name))
                     if dir_name == 'plot_creation' and 'init_files' in os.listdir(os.path.join(config_dir, level_name, model_name,'utils', dir_name)):
@@ -63,6 +63,13 @@ def copy_files(config_dir, github_dir):
                             if file_name[0] != '.' and file_name[-3:]=='.py' and file_name[0] != '_':
                                 shutil.copyfile(os.path.join(config_dir, level_name, model_name, 'utils',dir_name,'init_files', file_name),
                                                 os.path.join(github_dir, level_name, model_name, 'utils',dir_name,'init_files', file_name))
+                    if dir_name == 'plot_creation' and 'results' in os.listdir(os.path.join(config_dir, level_name, model_name,'utils', dir_name)):
+                        if 'results' not in os.listdir(os.path.join(github_dir, level_name, model_name,'utils',dir_name)):
+                            os.mkdir(os.path.join(github_dir, level_name, model_name, 'utils', dir_name,'results'))
+                        for file_name in os.listdir(os.path.join(config_dir, level_name, model_name, 'utils',dir_name,'results')):
+                            if file_name[0] != '.' and file_name[-3:]=='.py' and file_name[0] != '_':
+                                shutil.copyfile(os.path.join(config_dir, level_name, model_name, 'utils',dir_name,'results', file_name),
+                                                os.path.join(github_dir, level_name, model_name, 'utils',dir_name,'results', file_name))
             for file_name in os.listdir(os.path.join(config_dir, level_name, model_name, 'utils')):
                 if file_name[-3:]=='.sh' or file_name[-3:]=='.py':
                     shutil.copyfile(os.path.join(config_dir, level_name, model_name, 'utils', file_name),
@@ -79,7 +86,7 @@ def copy_files(config_dir, github_dir):
                     if dir_name not in os.listdir(os.path.join(github_dir, level_name, 'utils')):
                         os.mkdir(os.path.join(github_dir, level_name, 'utils', dir_name))
                     for file_name in os.listdir(os.path.join(config_dir, level_name, 'utils', dir_name)):
-                        if file_name[0] != '.' and file_name[0] != '_' and file_name!='init_files':
+                        if file_name[0] != '.' and file_name[0] != '_' and file_name!='init_files' and file_name!='results':
                             shutil.copyfile(
                                 os.path.join(config_dir, level_name, 'utils', dir_name, file_name),
                                 os.path.join(github_dir, level_name, 'utils', dir_name, file_name))
@@ -91,6 +98,14 @@ def copy_files(config_dir, github_dir):
                                 shutil.copyfile(
                                     os.path.join(config_dir, level_name, 'utils', dir_name,'init_files', file_name),
                                     os.path.join(github_dir, level_name, 'utils', dir_name,'init_files', file_name))
+                    if dir_name == 'plot_creation' and 'results' in os.listdir(os.path.join(config_dir, level_name, 'utils',dir_name)):
+                        if 'results' not in os.listdir(os.path.join(github_dir, level_name, 'utils',dir_name)):
+                            os.mkdir(os.path.join(github_dir, level_name, 'utils', dir_name, 'results'))
+                        for file_name in os.listdir(os.path.join(config_dir, level_name, 'utils', dir_name,'results')):
+                            if file_name[0] != '.' and file_name[0] != '_':
+                                shutil.copyfile(
+                                    os.path.join(config_dir, level_name, 'utils', dir_name,'results', file_name),
+                                    os.path.join(github_dir, level_name, 'utils', dir_name,'results', file_name))
 
             for file_name in os.listdir(os.path.join(config_dir, level_name, 'utils')):
                 if file_name[-3:] == '.sh' or file_name[-3:] == '.py':
@@ -112,7 +127,7 @@ def copy_files(config_dir, github_dir):
                         os.path.join(config_dir,  'utils', dir_name, file_name),
                         os.path.join(github_dir,  'utils', dir_name, file_name))
     for file_name in os.listdir(os.path.join(config_dir,  'utils')):
-        if file_name[-3:] == '.sh' or file_name[-3:] == '.py' and file_name[0] != '_':
+        if file_name[-3:] == '.sh' or file_name[-3:] == '.py' and file_name[0] != '_' and file_name!='copy_files_to_github_dir.py':
             shutil.copyfile(os.path.join(config_dir, 'utils', file_name),
                             os.path.join(github_dir, 'utils', file_name))
 

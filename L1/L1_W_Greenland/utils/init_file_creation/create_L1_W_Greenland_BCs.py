@@ -26,7 +26,6 @@ def create_BCs(config_dir, ecco_dir, print_level):
 
     proc_ids = np.arange(160).tolist() #(31+9)*4 = 160
     boundaries = ['north','south','east','west']
-    proc_ids = [0]
 
     import create_L1_monthly_BCs as cef
     for proc_id in proc_ids:

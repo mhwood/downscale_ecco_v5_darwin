@@ -20,27 +20,26 @@ def create_BCs(config_dir, ecco_dir, print_level):
     final_year = 1992
     final_month = 1
 
-    # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
-    import create_L1_BC_field_ref as ebcr
-    ebcr.create_L1_BC_ref_file(config_dir, L1_model_name, print_level)
+    proc_ids = np.arange(105).tolist()  # (31+4)*3 = 105
+    boundaries = ['north', 'south', 'west']
 
-    proc_ids = np.arange(105).tolist() #(31+4)*3 = 105
-    boundaries = ['north','south','west']
-    proc_ids = proc_ids[12:]
+    # # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
+    # import create_L1_BC_field_ref as ebcr
+    # ebcr.create_L1_BC_ref_file(config_dir, L1_model_name, print_level)
 
-    import create_L1_monthly_BCs as cef
-    for proc_id in proc_ids:
-        cef.create_bc_fields_via_interpolation(config_dir, ecco_dir, L1_model_name, boundaries, proc_id,
-                                               start_year, final_year, start_month, final_month, print_level)
+    # import create_L1_monthly_BCs as cef
+    # for proc_id in proc_ids:
+    #     cef.create_bc_fields_via_interpolation(config_dir, ecco_dir, L1_model_name, boundaries, proc_id,
+    #                                            start_year, final_year, start_month, final_month, print_level)
 
     # # step 3: combine all of the BC fields into a single file
-    # import combine_and_rotate_L1_daily_bc_files as com
+    # import combine_and_rotate_L1_monthly_bc_files as com
     # for proc_id in proc_ids:
-    #     com.combine_and_rotate_L1_daily_bcs(config_dir, L1_model_name, proc_id,
+    #     com.combine_and_rotate_L1_monthly_bcs(config_dir, L1_model_name, boundaries, proc_id,
     #                                         start_year, final_year, print_level)
-    #
-    # import balance_L1_vector_BCs as bbcs
-    # bbcs.balance_bc_fields(config_dir, L1_model_name, start_year, final_year, print_level)
+
+    import balance_L1_vector_BCs as bbcs
+    bbcs.balance_bc_fields(config_dir, L1_model_name, boundaries, start_year, final_year, print_level)
 
 
 if __name__ == '__main__':
