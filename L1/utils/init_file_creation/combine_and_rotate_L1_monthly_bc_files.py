@@ -14,9 +14,7 @@ def get_dest_file_list(mask_name, var_name, Nr, n_rows_L1,n_cols_L1, year):
     dest_file_shapes = {}
     total_timesteps = 0
 
-    print(' WARNING: Months set to 2 for testing in combine_and_rotate_L1_monthly_bcs')
-
-    for month in range(1, 2):#13):
+    for month in range(1, 13):
 
         if month in [1, 3, 5, 7, 8, 10, 12]:
             nTimesteps = 31
@@ -42,7 +40,7 @@ def get_dest_file_list(mask_name, var_name, Nr, n_rows_L1,n_cols_L1, year):
 
     return(dest_files,dest_file_shapes,total_timesteps)
 
-def stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name, AngleCS, AngleSN, dest_files, dest_file_shapes,total_timesteps,print_level):
+def stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name, AngleCS, AngleSN, dest_files, dest_file_shapes,total_timesteps,print_level,read_from_unbalanced):
 
     depth_levels = dest_file_shapes[dest_files[0]][1]
     rows = dest_file_shapes[dest_files[0]][2]
@@ -79,9 +77,14 @@ def stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name
                     v_dest_file = dest_file
                 else:
                     v_dest_file = dest_file.replace('UVEL','VVEL')
-                u_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',mask_name, 'UVEL', u_dest_file), '>f4')
+
+                if read_from_unbalanced:
+                    u_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs','unbalanced',mask_name, 'UVEL', u_dest_file), '>f4')
+                    v_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs','unbalanced',mask_name, 'VVEL', v_dest_file),'>f4')
+                else:
+                    u_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', mask_name, 'UVEL',u_dest_file), '>f4')
+                    v_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', mask_name, 'VVEL',v_dest_file), '>f4')
                 u_var_grid = np.reshape(u_var_grid, dest_file_shapes[dest_file])
-                v_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',mask_name, 'VVEL', v_dest_file),'>f4')
                 v_var_grid = np.reshape(v_var_grid, dest_file_shapes[dest_file])
 
             if 'ICE' in var_name:
@@ -93,9 +96,13 @@ def stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name
                     v_dest_file = dest_file
                 else:
                     v_dest_file = dest_file.replace('UICE','VICE')
-                u_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',mask_name, 'UICE', u_dest_file), '>f4')
+                if read_from_unbalanced:
+                    u_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs','unbalanced',mask_name, 'UICE', u_dest_file), '>f4')
+                    v_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs','unbalanced',mask_name, 'VICE', v_dest_file),'>f4')
+                else:
+                    u_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', mask_name, 'UICE',u_dest_file), '>f4')
+                    v_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', mask_name, 'VICE',v_dest_file), '>f4')
                 u_var_grid = np.reshape(u_var_grid, dest_file_shapes[dest_file])
-                v_var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',mask_name, 'VICE', v_dest_file),'>f4')
                 v_var_grid = np.reshape(v_var_grid, dest_file_shapes[dest_file])
 
             var_grid = np.zeros_like(u_var_grid)
@@ -107,7 +114,10 @@ def stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name
                         var_grid[timestep, k, :, :] = -1*AngleSN*u_var_grid[timestep, k, :, :] + AngleCS*v_var_grid[timestep, k, :, :]
 
         else:
-            var_grid = np.fromfile(os.path.join(config_dir,'L1',L1_model_name, 'input','obcs',mask_name,var_name,dest_file),'>f4')
+            if read_from_unbalanced:
+                var_grid = np.fromfile(os.path.join(config_dir,'L1',L1_model_name, 'input','obcs','unbalanced',mask_name,var_name,dest_file),'>f4')
+            else:
+                var_grid = np.fromfile(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', mask_name, var_name,dest_file), '>f4')
             var_grid = np.reshape(var_grid,dest_file_shapes[dest_file])
 
         if print_level>=2:
@@ -123,35 +133,54 @@ def stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name
 
     return(output_grid)
 
-def combine_and_rotate_L1_monthly_bcs(config_dir, L1_model_name, boundaries, proc_id,
-                                    start_year, final_year, print_level):
+def combine_and_rotate_L1_monthly_bcs(config_dir, L1_model_name, boundaries, var_names,
+                                      start_year, final_year, print_level, velocity_only = False,
+                                      read_from_unbalanced = True):
     
-    if L1_model_name in ['L1_W_Greenland', 'L1_mac_delta']:
-        var_names = ['THETA', 'SALT', 'UVEL', 'VVEL', 'UICE', 'VICE', 'HSNOW', 'HEFF', 'AREA']
-    else:
-        var_names = ['THETA', 'SALT', 'UVEL', 'VVEL']
-    for i in range(1, 32):
-        var_names.append('PTRACE' + '{:02d}'.format(i))
+    # if L1_model_name in ['L1_W_Greenland', 'L1_mac_delta']:
+    #     var_names = ['THETA', 'SALT', 'UVEL', 'VVEL', 'UICE', 'VICE', 'HSNOW', 'HEFF', 'AREA']
+    # else:
+    #     var_names = ['THETA', 'SALT', 'UVEL', 'VVEL']
+    # for i in range(1, 32):
+    #     var_names.append('PTRACE' + '{:02d}'.format(i))
 
-    var_name_list = []
-    mask_name_list = []
-    for var_name in var_names:
-        for boundary in boundaries:
-            var_name_list.append(var_name)
-            mask_name_list.append(boundary)
+    # var_name_list = []
+    # mask_name_list = []
+    # for var_name in var_names:
+    #     for boundary in boundaries:
+    #         if velocity_only:
+    #             if var_name in ['UVEL','VVEL']:
+    #                 var_name_list.append(var_name)
+    #                 mask_name_list.append(boundary)
+    #         else:
+    #             var_name_list.append(var_name)
+    #             mask_name_list.append(boundary)
 
-    var_name = var_name_list[proc_id % len(var_name_list)]
-    mask_name = mask_name_list[proc_id % len(var_name_list)]
+    # var_name = var_name_list[proc_id % len(var_name_list)]
+    # mask_name = mask_name_list[proc_id % len(var_name_list)]
 
-    grid_file = os.path.join(config_dir,'nc_grids',L1_model_name+'_grid.nc')
-    ds = nc4.Dataset(grid_file)
-    AngleCS = ds.variables['AngleCS'][:,:]
-    AngleSN = ds.variables['AngleSN'][:, :]
-    n_rows_L1 = np.shape(AngleCS)[0]
-    n_cols_L1 = np.shape(AngleCS)[1]
-    drF = ds.variables['drF'][:]
-    Nr = len(drF)
-    ds.close()
+    # grid_file = os.path.join(config_dir,'nc_grids',L1_model_name+'_grid.nc')
+    # ds = nc4.Dataset(grid_file)
+    # AngleCS = ds.variables['AngleCS'][:,:]
+    # AngleSN = ds.variables['AngleSN'][:, :]
+    # n_rows_L1 = np.shape(AngleCS)[0]
+    # n_cols_L1 = np.shape(AngleCS)[1]
+    # drF = ds.variables['drF'][:]
+    # Nr = len(drF)
+    # ds.close()
+
+    for mask_name in boundaries:
+        for var_name in var_names:
+
+            grid_file = os.path.join(config_dir, 'nc_grids', L1_model_name + '_grid.nc')
+            ds = nc4.Dataset(grid_file)
+            AngleCS = ds.variables['AngleCS'][:, :]
+            AngleSN = ds.variables['AngleSN'][:, :]
+            n_rows_L1 = np.shape(AngleCS)[0]
+            n_cols_L1 = np.shape(AngleCS)[1]
+            drF = ds.variables['drF'][:]
+            Nr = len(drF)
+            ds.close()
 
     # print('There is an error at the boundary in the AngleCS/SN fields so taking')
     # print('these fields from one row/col on the interior')
@@ -167,83 +196,102 @@ def combine_and_rotate_L1_monthly_bcs(config_dir, L1_model_name, boundaries, pro
     # if mask_name=='east':
     #     AngleCS = AngleCS[:,-1:]
     #     AngleSN = AngleSN[:,-1:]
-    if mask_name=='north':
-        AngleCS = AngleCS[-2:-1,:]
-        AngleSN = AngleSN[-2:-1,:]
-        AngleCS[0, 0] = AngleCS[0, 1]
-        AngleCS[0, -1] = AngleCS[0, -2]
-        AngleSN[0, 0] = AngleSN[0, 1]
-        AngleSN[0, -1] = AngleSN[0, -2]
-    if mask_name=='south':
-        AngleCS = AngleCS[1:2,:]
-        AngleSN = AngleSN[1:2,:]
-        AngleCS[0, 0] = AngleCS[0, 1]
-        AngleCS[0, -1] = AngleCS[0, -2]
-        AngleSN[0, 0] = AngleSN[0, 1]
-        AngleSN[0, -1] = AngleSN[0, -2]
-    if mask_name=='west':
-        AngleCS = AngleCS[:,1:2]
-        AngleSN = AngleSN[:,1:2]
-        AngleCS[0,0] = AngleCS[1,0]
-        AngleCS[-1,0] = AngleCS[-2,0]
-        AngleSN[0, 0] = AngleSN[1, 0]
-        AngleSN[-1, 0] = AngleSN[-2, 0]
-    if mask_name=='east':
-        AngleCS = AngleCS[:,-2:-1]
-        AngleSN = AngleSN[:,-2:-1]
-        AngleCS[0, 0] = AngleCS[1, 0]
-        AngleCS[-1, 0] = AngleCS[-2, 0]
-        AngleSN[0, 0] = AngleSN[1, 0]
-        AngleSN[-1, 0] = AngleSN[-2, 0]
+            if mask_name=='north':
+                AngleCS = AngleCS[-2:-1,:]
+                AngleSN = AngleSN[-2:-1,:]
+                AngleCS[0, 0] = AngleCS[0, 1]
+                AngleCS[0, -1] = AngleCS[0, -2]
+                AngleSN[0, 0] = AngleSN[0, 1]
+                AngleSN[0, -1] = AngleSN[0, -2]
+            if mask_name=='south':
+                AngleCS = AngleCS[1:2,:]
+                AngleSN = AngleSN[1:2,:]
+                AngleCS[0, 0] = AngleCS[0, 1]
+                AngleCS[0, -1] = AngleCS[0, -2]
+                AngleSN[0, 0] = AngleSN[0, 1]
+                AngleSN[0, -1] = AngleSN[0, -2]
+            if mask_name=='west':
+                AngleCS = AngleCS[:,1:2]
+                AngleSN = AngleSN[:,1:2]
+                AngleCS[0,0] = AngleCS[1,0]
+                AngleCS[-1,0] = AngleCS[-2,0]
+                AngleSN[0, 0] = AngleSN[1, 0]
+                AngleSN[-1, 0] = AngleSN[-2, 0]
+            if mask_name=='east':
+                AngleCS = AngleCS[:,-2:-1]
+                AngleSN = AngleSN[:,-2:-1]
+                AngleCS[0, 0] = AngleCS[1, 0]
+                AngleCS[-1, 0] = AngleCS[-2, 0]
+                AngleSN[0, 0] = AngleSN[1, 0]
+                AngleSN[-1, 0] = AngleSN[-2, 0]
 
-    if var_name in ['ETAN','UICE','VICE','AREA','HSNOW','HEFF']:
-        Nr = 1
+            if var_name in ['ETAN','UICE','VICE','AREA','HSNOW','HEFF']:
+                Nr = 1
 
-    years = np.arange(start_year,final_year+1).tolist()
+            years = np.arange(start_year,final_year+1).tolist()
 
-    if print_level >=1:
-        print('    - Combining monthly BC files for ' + var_name)
+            if print_level >=1:
+                print('    - Combining monthly BC files for ' + var_name)
 
-    for year in years:
+            for year in years:
 
-        if var_name=='UVEL' and mask_name=='east':
-            output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
-                                       'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
-        elif var_name=='UVEL' and mask_name=='west':
-            output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
-                                       'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
-        elif var_name=='VVEL' and mask_name=='north':
-            output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
-                                       'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
-        elif var_name=='VVEL' and mask_name=='south':
-            output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
-                                       'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
-        else:
-            output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
-                                       'L1_BC_' + mask_name + '_' + var_name + '_' + str(year))
+                if read_from_unbalanced:
+                    if var_name=='UVEL' and mask_name=='east':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'unbalanced',mask_name,var_name,
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    elif var_name=='UVEL' and mask_name=='west':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'unbalanced',mask_name,var_name,
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    elif var_name=='VVEL' and mask_name=='north':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'unbalanced',mask_name,var_name,
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    elif var_name=='VVEL' and mask_name=='south':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'unbalanced',mask_name,var_name,
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    else:
+                        if var_name not in os.listdir(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'balanced',mask_name)):
+                            os.mkdir(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'balanced',mask_name,var_name))
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'balanced',mask_name,var_name,
+                                                   'L1_BC_' + mask_name + '_' + var_name + '_' + str(year))
+                else:
+                    if var_name=='UVEL' and mask_name=='east':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'annual',
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    elif var_name=='UVEL' and mask_name=='west':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'annual',
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    elif var_name=='VVEL' and mask_name=='north':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'annual',
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    elif var_name=='VVEL' and mask_name=='south':
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'annual',
+                                                   'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')
+                    else:
+                        output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'annual',
+                                                   'L1_BC_' + mask_name + '_' + var_name + '_' + str(year))
 
-        if not os.path.exists(output_file):
+                if True:#not os.path.exists(output_file):
 
-            if print_level >= 2:
-                print('        - Combining files in year ' + str(year))
+                    if print_level >= 2:
+                        print('        - Combining files in year ' + str(year))
 
-            if print_level >= 3:
-                print('            - Getting a list of monthly files')
-            dest_files, dest_file_shapes, total_timesteps = get_dest_file_list(mask_name, var_name, Nr, n_rows_L1, n_cols_L1, year)
+                    if print_level >= 3:
+                        print('            - Getting a list of monthly files')
+                    dest_files, dest_file_shapes, total_timesteps = get_dest_file_list(mask_name, var_name, Nr, n_rows_L1, n_cols_L1, year)
 
-            if print_level >= 3:
-                print('            - Stacking all of the monthly files into a big global file')
-            output_grid = stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name,
-                                                      AngleCS, AngleSN, dest_files, dest_file_shapes, total_timesteps, print_level)
+                    if print_level >= 3:
+                        print('            - Stacking all of the monthly files into a big global file')
+                    output_grid = stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name,
+                                                              AngleCS, AngleSN, dest_files, dest_file_shapes, total_timesteps, print_level, read_from_unbalanced)
 
-            if print_level >= 2:
-                print('        - Outputting to ' + output_file)
-            output_grid.ravel('C').astype('>f4').tofile(output_file)
+                    if print_level >= 2:
+                        print('        - Outputting to ' + output_file)
+                    output_grid.ravel('C').astype('>f4').tofile(output_file)
 
-        else:
+                else:
 
-            if print_level >= 2:
-                print('        - Skipping '+str(var_name)+' file in year ' + str(year)+' because it already exists')
+                    if print_level >= 2:
+                        print('        - Skipping '+str(var_name)+' file in year ' + str(year)+' because it already exists')
 
 if __name__ == '__main__':
 

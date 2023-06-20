@@ -17,24 +17,24 @@ def create_exfs(config_dir, ecco_dir, print_level):
     start_year = 1992
     start_month = 1
 
-    final_year = 1992
-    final_month = 1
-
-    proc_ids = np.arange(10).tolist()
+    final_year = 1993
+    final_month = 12
 
     # # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
     # import create_L1_exf_field_ref as ebcr
     # ebcr.create_L1_exf_ref_file(config_dir, L1_model_name, print_level)
-    #
-    # import create_L1_monthly_exfs as cef
-    # for proc_id in proc_ids:
-    #     cef.create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
-    #                              start_year, final_year, start_month, final_month, print_level)
 
-    # combine all of the exf fields into a single file
-    import combine_and_rotate_L1_monthly_exf_files as com
+    proc_ids = np.arange(10).tolist()
+
+    import create_L1_monthly_exfs as cef
     for proc_id in proc_ids:
-        com.combine_and_rotate_L1_monthly_exf_files(config_dir, L1_model_name, proc_id, start_year, final_year, print_level)
+        cef.create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
+                                 start_year, final_year, start_month, final_month, print_level)
+
+    import combine_and_rotate_L1_monthly_exf_files as cre
+    for proc_id in proc_ids:
+        cre.combine_and_rotate_L1_monthly_exf_files(config_dir, L1_model_name, proc_id,
+                                                    start_year, final_year, print_level)
 
 
 if __name__ == '__main__':

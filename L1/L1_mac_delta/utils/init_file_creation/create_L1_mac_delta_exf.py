@@ -16,14 +16,16 @@ def create_exfs(config_dir, ecco_dir, print_level):
     start_year = 1992
     start_month = 1
 
-    final_year = 1992
-    final_month = 1
+    final_year = 2000
+    final_month = 12
 
     # # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
     # import create_L1_exf_field_ref as ebcr
     # ebcr.create_L1_exf_ref_file(config_dir, L1_model_name, print_level)
 
     proc_ids = np.arange(10).tolist()
+    proc_ids = np.arange(4).tolist()
+    proc_ids = np.arange(4,10).tolist()
 
     import create_L1_monthly_exfs as cef
     for proc_id in proc_ids:

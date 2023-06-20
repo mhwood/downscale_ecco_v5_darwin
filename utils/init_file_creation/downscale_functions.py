@@ -820,6 +820,7 @@ def downscale_3D_field(L0_XC, L0_YC, L0_var, L0_wet_grid, L0_wet_grid_on_L1,
 
     if testing:
         K=1
+        print('Tesintg => K=1')
     else:
         K=np.shape(L1_wet_grid)[0]
 

@@ -5,6 +5,7 @@ import simplegrid as sg
 import numpy as np
 import matplotlib.pyplot as plt
 import netCDF4 as nc4
+import datetime
 import argparse
 import ast
 
@@ -22,6 +23,58 @@ def read_grid_information(config_dir, model_name):
     return (rA, dxG, dyG, hFacS, hFacW, delR)
 
 
+def read_flux_timeseries(config_dir, L1_model_name, year, boundaries, field_name, level='L1', balanced = True):
+
+    dec_yr = []
+
+    start_index = 0
+    end_index = 366
+
+    # make the dec yr array
+    for yr in range(1992,2030):
+        if yr<year:
+            if yr%4==0:
+                start_index+=366
+            else:
+                start_index+=365
+            if (yr+1)%4==0:
+                end_index+=365
+            else:
+                end_index+=366
+
+    if level=='L1' and balanced:
+        file_path = os.path.join(config_dir,'L1',L1_model_name,'input','obcs',
+                                     'timeseries','L1_timeseries','balanced',L1_model_name+'_'+field_name+'_boundary_flux.nc')
+    if level=='L1' and not balanced:
+        file_path = os.path.join(config_dir,'L1',L1_model_name,'input','obcs',
+                                     'timeseries','L1_timeseries','unbalanced',L1_model_name+'_'+field_name+'_boundary_flux.nc')
+    if level=='L0':
+        file_path = os.path.join(config_dir,'L1',L1_model_name,'input','obcs',
+                                     'timeseries','L0_timeseries','L0_'+L1_model_name[3:]+'_'+field_name+'_boundary_flux.nc')
+
+
+
+    all_timeseries = []
+    for boundary in boundaries:
+        ds = nc4.Dataset(file_path)
+        grp = ds.groups[boundary]
+        timeseries = grp.variables['integrated_timeseries'][:]
+        timeseries = timeseries[start_index:end_index]
+        ds.close()
+        all_timeseries.append(timeseries)
+
+    time = []
+
+    return(time,all_timeseries)
+
+def YMD_to_DecYr(year,month,day,hour=0,minute=0,second=0):
+    date = datetime.datetime(year,month,day,hour,minute,second)
+    start = datetime.date(date.year, 1, 1).toordinal()
+    year_length = datetime.date(date.year+1, 1, 1).toordinal() - start
+    decimal_fraction = float(date.toordinal() - start) / year_length
+    dec_yr = year+decimal_fraction
+    return(dec_yr)
+
 def read_velocities_normal_to_boundary(config_dir, model_name,year,boundary,Nr,n_cols,n_rows,balanced):
 
     if balanced:
@@ -35,7 +88,7 @@ def read_velocities_normal_to_boundary(config_dir, model_name,year,boundary,Nr,n
 
     if boundary=='east':
 
-        uvel_east_file = os.path.join(obcs_folder,'annual','L1_BC_east_UVEL_'+str(year)+balanced_text)
+        uvel_east_file = os.path.join(obcs_folder,balanced_dir,boundary,'UVEL','L1_BC_east_UVEL_'+str(year)+balanced_text)
         uvel_east = np.fromfile(uvel_east_file,'>f4')
         n_timesteps = int(np.size(uvel_east)/(Nr*n_rows))
         uvel_east = np.reshape(uvel_east,(n_timesteps,Nr,n_rows)).astype(float)
@@ -43,7 +96,7 @@ def read_velocities_normal_to_boundary(config_dir, model_name,year,boundary,Nr,n
 
     if boundary=='west':
 
-        uvel_west_file = os.path.join(obcs_folder,'annual','L1_BC_west_UVEL_'+str(year)+balanced_text)
+        uvel_west_file = os.path.join(obcs_folder,balanced_dir,boundary,'UVEL','L1_BC_west_UVEL_'+str(year)+balanced_text)
         uvel_west = np.fromfile(uvel_west_file,'>f4')
         n_timesteps = int(np.size(uvel_west)/(Nr*n_rows))
         uvel_west = np.reshape(uvel_west,(n_timesteps,Nr,n_rows)).astype(float)
@@ -62,7 +115,7 @@ def read_velocities_normal_to_boundary(config_dir, model_name,year,boundary,Nr,n
 
     if boundary == 'north':
 
-        vvel_north_file = os.path.join(obcs_folder,'annual', 'L1_BC_north_VVEL_'+str(year)+balanced_text)
+        vvel_north_file = os.path.join(obcs_folder,balanced_dir,boundary,'VVEL', 'L1_BC_north_VVEL_'+str(year)+balanced_text)
         vvel_north = np.fromfile(vvel_north_file, '>f4')
         n_timesteps = int(np.size(vvel_north) / (Nr * n_cols))
         vvel_north = np.reshape(vvel_north, (n_timesteps, Nr, n_cols)).astype(float)
@@ -70,7 +123,7 @@ def read_velocities_normal_to_boundary(config_dir, model_name,year,boundary,Nr,n
 
     if boundary == 'south':
 
-        vvel_south_file = os.path.join(obcs_folder,'annual', 'L1_BC_south_VVEL_'+str(year)+balanced_text)
+        vvel_south_file = os.path.join(obcs_folder,balanced_dir,boundary,'VVEL', 'L1_BC_south_VVEL_'+str(year)+balanced_text)
         vvel_south = np.fromfile(vvel_south_file, '>f4')
         n_timesteps = int(np.size(vvel_south) / (Nr * n_cols))
         vvel_south = np.reshape(vvel_south, (n_timesteps, Nr, n_cols)).astype(float)
@@ -137,6 +190,42 @@ def calculate_flux_timeseries(vel_grid, boundary,
         flux_timeseries *= -1
 
     return(flux_timeseries, total_area, mask)
+
+def calculate_area_and_mask(boundary, dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats = False):
+
+    if boundary=='north':
+        hFac = hFacS[:,-2,:]
+        width = dxG[-2,:]
+    if boundary=='south':
+        hFac = hFacS[:,1,:]
+        width = dxG[1, :]
+    if boundary=='east':
+        hFac = hFacW[:,:,-2]
+        width = dyG[:, -2]
+    if boundary=='west':
+        hFac = hFacW[:,:,1]
+        width = dyG[:, 1]
+
+    # note: the first and last grid cells are not calculated in the flux
+    # one way to solve this issue is just to make hfac=0 in these areas
+    hFac[:, 0] = 0
+    hFac[:, -1] = 0
+
+    # make a mask to apply the corrections later
+    mask = np.copy(hFac)
+    mask[mask>0]=1
+    mask[mask<=0]=0
+
+    total_area = 0.0
+    for i in range(np.shape(hFac)[1]):
+        for j in range(np.shape(hFac)[0]):
+            total_area += width[i] * delR[j] * hFac[j, i]
+
+    if print_snapshot_stats:
+        print('    Area ',total_area)
+
+    return(total_area, mask)
+
 
 
 def plot_boundary_fluxes(output_file, boundaries, east_flux_timeseries, west_flux_timeseries, north_flux_timeseries,south_flux_timeseries,rA):
@@ -221,14 +310,24 @@ def balance_flux_on_boundaries(config_dir, boundaries, model_name, year, running
     # one can modify the balance fractions below, but the default it to remove it from all boundaries equally
     # note, for these, that the W and S boundaries have a -1 applied below
 
+    # if 'north' in boundaries:
+    #     balanceFacN = 1
+    # if 'south' in boundaries:
+    #     balanceFacS = 1
+    # if 'east' in boundaries:
+    #     balanceFacE = 1
+    # if 'west' in boundaries:
+    #     balanceFacW = 1
+
+    total_area = east_area + north_area + south_area + west_area
     if 'north' in boundaries:
-        balanceFacN = 1
+        balanceFacN = north_area/total_area
     if 'south' in boundaries:
-        balanceFacS = 1
+        balanceFacS = south_area/total_area
     if 'east' in boundaries:
-        balanceFacE = 1
+        balanceFacE = east_area/total_area
     if 'west' in boundaries:
-        balanceFacW = 1
+        balanceFacW = west_area/total_area
 
     flux_started = False
     if 'east' in boundaries:
@@ -256,18 +355,17 @@ def balance_flux_on_boundaries(config_dir, boundaries, model_name, year, running
         else:
             total_flux_timeseries = total_flux_timeseries + south_flux_timeseries
 
-    total_area = east_area + north_area + south_area + west_area
     total_correction = total_flux_timeseries / total_area
 
     print('|- corrections -----------------------------|')
     if 'east' in boundaries:
-        print('    flowE ',east_flux_timeseries[0])
+        print('    flowE ',east_flux_timeseries[0]*balanceFacE)
     if 'west' in boundaries:
-        print('    flowW ',west_flux_timeseries[0])
+        print('    flowW ',west_flux_timeseries[0]*balanceFacW)
     if 'north' in boundaries:
-        print('    flowN ', north_flux_timeseries[0])
+        print('    flowN ', north_flux_timeseries[0]*balanceFacN)
     if 'south' in boundaries:
-        print('    flowS ', south_flux_timeseries[0])
+        print('    flowS ', south_flux_timeseries[0]*balanceFacS)
     print('    inFlow ',total_flux_timeseries[0])
     print('    areaOB ',total_area)
     print('    inFlow/areaOB ',total_correction[0])
@@ -296,7 +394,7 @@ def balance_flux_on_boundaries(config_dir, boundaries, model_name, year, running
         uvel_east = read_velocities_normal_to_boundary(config_dir,model_name,  year,'east', Nr, n_cols, n_rows, balanced=False)
         for i in range(n_timesteps):
             uvel_east[i,:,:] += total_correction[i] * east_mask*balanceFacE
-        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','annual', 'L1_BC_east_UVEL_'+str(year))
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','east','UVEL', 'L1_BC_east_UVEL_'+str(year))
         uvel_east.ravel('C').astype('>f4').tofile(output_file)
         del uvel_east
 
@@ -305,7 +403,7 @@ def balance_flux_on_boundaries(config_dir, boundaries, model_name, year, running
         uvel_west = read_velocities_normal_to_boundary(config_dir,model_name,  year,'west', Nr, n_cols, n_rows, balanced=False)
         for i in range(n_timesteps):
             uvel_west[i,:,:] += total_correction[i] * west_mask*balanceFacW
-        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','annual', 'L1_BC_west_UVEL_'+str(year))
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','west','UVEL', 'L1_BC_west_UVEL_'+str(year))
         uvel_west.ravel('C').astype('>f4').tofile(output_file)
         del uvel_west
 
@@ -314,7 +412,7 @@ def balance_flux_on_boundaries(config_dir, boundaries, model_name, year, running
         vvel_north = read_velocities_normal_to_boundary(config_dir,model_name,  year,'north', Nr, n_cols, n_rows, balanced=False)
         for i in range(n_timesteps):
             vvel_north[i, :, :] += total_correction[i] * north_mask * balanceFacN
-        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','annual', 'L1_BC_north_VVEL_'+str(year))
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','north','VVEL', 'L1_BC_north_VVEL_'+str(year))
         vvel_north.ravel('C').astype('>f4').tofile(output_file)
         del vvel_north
 
@@ -323,9 +421,69 @@ def balance_flux_on_boundaries(config_dir, boundaries, model_name, year, running
         vvel_south = read_velocities_normal_to_boundary(config_dir,model_name,  year,'south', Nr, n_cols, n_rows, balanced=False)
         for i in range(n_timesteps):
             vvel_south[i, :, :] -= total_correction[i] * south_mask * balanceFacS
-        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','annual', 'L1_BC_south_VVEL_'+str(year))
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','south','VVEL', 'L1_BC_south_VVEL_'+str(year))
         vvel_south.ravel('C').astype('>f4').tofile(output_file)
         del vvel_south
+
+def adjust_flux_on_boundaries(config_dir, boundaries, model_name, year, running_average_radius, Nr,n_cols,n_rows,
+                               L0_time, all_L0_timeseries,
+                               east_flux_timeseries, east_area, east_mask,
+                               west_flux_timeseries, west_area, west_mask,
+                               north_flux_timeseries, north_area, north_mask,
+                               south_flux_timeseries, south_area, south_mask,
+                               print_level):
+
+    east_correction = (all_L0_timeseries[boundaries.index('east')] - east_flux_timeseries) / east_area
+    west_correction = (all_L0_timeseries[boundaries.index('west')] - west_flux_timeseries) / west_area
+    north_correction = (all_L0_timeseries[boundaries.index('north')] - north_flux_timeseries) / north_area
+    south_correction = (all_L0_timeseries[boundaries.index('south')] - south_flux_timeseries) / south_area
+
+    print('     east_correction: ' + str(east_correction[0]))
+    print('     west_correction: ' + str(west_correction[0]))
+    print('     south_correction: ' + str(south_correction[0]))
+    print('     north_correction: ' + str(north_correction[0]))
+
+    #####################################################
+    # apply the boundary flux adjustments to each boundary
+
+    n_timesteps = np.size(all_L0_timeseries[0])
+
+    if 'east' in boundaries:
+        print('    - Correcting the east flux')
+        uvel_east = read_velocities_normal_to_boundary(config_dir,model_name,  year,'east', Nr, n_cols, n_rows, balanced=False)
+        for i in range(n_timesteps):
+            uvel_east[i,:,:] -= east_correction[i] * east_mask
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','east','UVEL', 'L1_BC_east_UVEL_'+str(year))
+        uvel_east.ravel('C').astype('>f4').tofile(output_file)
+        del uvel_east
+
+    if 'west' in boundaries:
+        print('    - Correcting the west flux')
+        uvel_west = read_velocities_normal_to_boundary(config_dir,model_name,  year,'west', Nr, n_cols, n_rows, balanced=False)
+        for i in range(n_timesteps):
+            uvel_west[i,:,:] += west_correction[i] * west_mask
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','west','UVEL', 'L1_BC_west_UVEL_'+str(year))
+        uvel_west.ravel('C').astype('>f4').tofile(output_file)
+        del uvel_west
+
+    if 'north' in boundaries:
+        print('    - Correcting the north flux')
+        vvel_north = read_velocities_normal_to_boundary(config_dir,model_name,  year,'north', Nr, n_cols, n_rows, balanced=False)
+        for i in range(n_timesteps):
+            vvel_north[i, :, :] -= north_correction[i] * north_mask
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','north','VVEL', 'L1_BC_north_VVEL_'+str(year))
+        vvel_north.ravel('C').astype('>f4').tofile(output_file)
+        del vvel_north
+
+    if 'south' in boundaries:
+        print('    - Correcting the south flux')
+        vvel_south = read_velocities_normal_to_boundary(config_dir,model_name,  year,'south', Nr, n_cols, n_rows, balanced=False)
+        for i in range(n_timesteps):
+            vvel_south[i, :, :] += south_correction[i] * south_mask
+        output_file = os.path.join(config_dir,'L1',model_name, 'input', 'obcs','balanced','south','VVEL', 'L1_BC_south_VVEL_'+str(year))
+        vvel_south.ravel('C').astype('>f4').tofile(output_file)
+        del vvel_south
+
 
 def balance_bc_fields(config_dir, model_name, boundaries, start_year, final_year, print_level):
 
@@ -348,6 +506,32 @@ def balance_bc_fields(config_dir, model_name, boundaries, start_year, final_year
 
         ########################################################################################################
 
+        # L0_time, all_L0_timeseries = read_flux_timeseries(config_dir, model_name, year, boundaries, 'VEL', level='L0')
+        # L1_time, all_L1_timeseries = read_flux_timeseries(config_dir, model_name, year, boundaries, 'VEL', level='L1',balanced=False)
+
+        # west_flux_timeseries = all_L1_timeseries[boundaries.index('west')]
+        # east_flux_timeseries = all_L1_timeseries[boundaries.index('east')]
+        # north_flux_timeseries = all_L1_timeseries[boundaries.index('north')]
+        # south_flux_timeseries = all_L1_timeseries[boundaries.index('south')]
+
+        # plt.subplot(4,1,1)
+        # plt.plot(all_L0_timeseries[0])
+        # plt.plot(all_L1_timeseries[0])
+        # plt.title(boundaries[0])
+        # plt.subplot(4, 1, 2)
+        # plt.plot(all_L0_timeseries[1])
+        # plt.plot(all_L1_timeseries[1])
+        # plt.title(boundaries[1])
+        # plt.subplot(4, 1, 3)
+        # plt.plot(all_L0_timeseries[2])
+        # plt.plot(all_L1_timeseries[2])
+        # plt.title(boundaries[2])
+        # plt.subplot(4, 1, 4)
+        # plt.plot(all_L0_timeseries[3])
+        # plt.plot(all_L1_timeseries[3])
+        # plt.title(boundaries[3])
+        # plt.show()
+
         if 'east' in boundaries:
 
             if print_level >= 2:
@@ -359,8 +543,7 @@ def balance_bc_fields(config_dir, model_name, boundaries, start_year, final_year
 
             if print_level >= 3:
                 print('            - Calculating the fluxes on the east boundary')
-            east_flux_timeseries, east_area, east_mask  = \
-                calculate_flux_timeseries(uvel_east, 'east', dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats = False)
+            east_area, east_mask = calculate_area_and_mask('east', dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats = False)
 
             del uvel_east
 
@@ -378,14 +561,11 @@ def balance_bc_fields(config_dir, model_name, boundaries, start_year, final_year
 
             if print_level >= 3:
                 print('            - Reading in the west velocity grid')
-            uvel_west = read_velocities_normal_to_boundary(config_dir, model_name, year, 'west', Nr, n_cols, n_rows,
-                                                           balanced=False)
+            uvel_west = read_velocities_normal_to_boundary(config_dir, model_name, year, 'west', Nr, n_cols, n_rows,balanced=False)
 
             if print_level >= 3:
                 print('            - Calculating the fluxes on the west boundary')
-            west_flux_timeseries, west_area, west_mask = \
-                calculate_flux_timeseries(uvel_west, 'west', dxG, dyG, hFacS, hFacW, delR, print_level,
-                                          print_snapshot_stats=False)
+            west_area, west_mask = calculate_area_and_mask('west', dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats = False)
 
             del uvel_west
 
@@ -406,8 +586,7 @@ def balance_bc_fields(config_dir, model_name, boundaries, start_year, final_year
 
             if print_level >= 3:
                 print('            - Calculating the fluxes on the north boundary')
-            north_flux_timeseries, north_area, north_mask = \
-                calculate_flux_timeseries(vvel_north, 'north', dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats=False)
+            north_area, north_mask = calculate_area_and_mask('north', dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats = False)
 
             del vvel_north
 
@@ -428,8 +607,7 @@ def balance_bc_fields(config_dir, model_name, boundaries, start_year, final_year
 
             if print_level >= 3:
                 print('            - Calculating the fluxes on the south boundary')
-            south_flux_timeseries, south_area, south_mask = \
-                calculate_flux_timeseries(vvel_south, 'south', dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats=False)
+            south_area, south_mask = calculate_area_and_mask('south', dxG, dyG, hFacS, hFacW, delR, print_level, print_snapshot_stats = False)
 
             del vvel_south
 
@@ -444,13 +622,16 @@ def balance_bc_fields(config_dir, model_name, boundaries, start_year, final_year
         # output_file = os.path.join(config_dir,'L1',model_name,'plots','init_files','BCs',model_name+'_unbalanced_fluxes_'+str(year)+'.png')
         # plot_boundary_fluxes(output_file, boundaries, east_flux_timeseries, west_flux_timeseries, north_flux_timeseries, south_flux_timeseries,rA)
 
-        print(' - Step 6: Adjusting the fluxes on each boundary')
+        print(' - Step 6: Balancing the fluxes on each boundary')
         balance_flux_on_boundaries(config_dir, boundaries, model_name, year, running_average_radius, Nr,n_cols,n_rows,
+                                  L0_time, all_L0_timeseries,
                                    east_flux_timeseries, east_area, east_mask,
                                    west_flux_timeseries, west_area, west_mask,
                                    north_flux_timeseries, north_area, north_mask,
                                    south_flux_timeseries, south_area, south_mask,
                                    print_level)
+
+
 
         # ########################################################################################################
         #

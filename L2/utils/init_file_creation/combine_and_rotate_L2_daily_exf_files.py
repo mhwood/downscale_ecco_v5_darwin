@@ -8,7 +8,7 @@ import argparse
 import ast
 import sys
 
-def get_dest_file_list(var_name, n_rows_L1, n_cols_L1, year):
+def get_dest_file_list(var_name, n_rows_L2, n_cols_L2, year):
 
     dest_files = []
     dest_file_shapes = {}
@@ -24,18 +24,19 @@ def get_dest_file_list(var_name, n_rows_L1, n_cols_L1, year):
                 nDays = 29
             else:
                 nDays = 28
-        if var_name in ['UWIND','VWIND']:
-            dest_file = 'L1_exf_' + var_name + '.' + str(year) + '{:02d}'.format(month) + '_rotated.bin'
-        else:
-            dest_file = 'L1_exf_' + var_name + '.' + str(year) + '{:02d}'.format(month) + '.bin'
-        dest_files.append(dest_file)
-        nTimesteps = nDays*4
-        total_timesteps += nTimesteps
-        dest_file_shapes[dest_file] = (nTimesteps, n_rows_L1, n_cols_L1)
+        for day in range(1, nDays + 1):
+            if var_name in ['UWIND','VWIND']:
+                dest_file = 'L2_exf_' + var_name + '_' + str(year) + '{:02d}'.format(month)+ '{:02d}'.format(day) + '_rotated.bin'
+            else:
+                dest_file = 'L2_exf_' + var_name + '_' + str(year) + '{:02d}'.format(month) + '{:02d}'.format(day) + '.bin'
+            dest_files.append(dest_file)
+            nTimesteps = 4
+            total_timesteps += nTimesteps
+            dest_file_shapes[dest_file] = (nTimesteps, n_rows_L2, n_cols_L2)
 
     return(dest_files,dest_file_shapes,total_timesteps)
 
-def stack_monthly_exf_files_to_one(config_dir, config_name, var_name, AngleCS, AngleSN, dest_files, dest_file_shapes,total_timesteps,print_level):
+def stack_daily_exf_files_to_one(config_dir, config_name, var_name, AngleCS, AngleSN, dest_files, dest_file_shapes,total_timesteps,print_level):
 
     rows = dest_file_shapes[dest_files[0]][1]
     cols = dest_file_shapes[dest_files[0]][2]
@@ -68,9 +69,9 @@ def stack_monthly_exf_files_to_one(config_dir, config_name, var_name, AngleCS, A
                 v_dest_file = dest_file
             else:
                 v_dest_file = dest_file.replace('UWIND','VWIND')
-            u_var_grid = np.fromfile(os.path.join(config_dir, 'L1', config_name, 'input', 'exf', 'UWIND', u_dest_file), '>f4')
+            u_var_grid = np.fromfile(os.path.join(config_dir, 'L2', config_name, 'input', 'exf', 'UWIND', u_dest_file), '>f4')
             u_var_grid = np.reshape(u_var_grid, dest_file_shapes[dest_file])
-            v_var_grid = np.fromfile(os.path.join(config_dir, 'L1', config_name, 'input', 'exf', 'VWIND', v_dest_file),'>f4')
+            v_var_grid = np.fromfile(os.path.join(config_dir, 'L2', config_name, 'input', 'exf', 'VWIND', v_dest_file),'>f4')
             v_var_grid = np.reshape(v_var_grid, dest_file_shapes[dest_file])
 
             var_grid = np.zeros_like(u_var_grid)
@@ -80,7 +81,7 @@ def stack_monthly_exf_files_to_one(config_dir, config_name, var_name, AngleCS, A
                 if var_name=='VWIND':
                     var_grid[timestep, :, :] = -1*AngleSN*u_var_grid[timestep, :, :] + AngleCS*v_var_grid[timestep, :, :]
         else:
-            var_grid = np.fromfile(os.path.join(config_dir,'L1',config_name, 'input','exf',var_name,dest_file),'>f4')
+            var_grid = np.fromfile(os.path.join(config_dir,'L2',config_name, 'input','exf',var_name,dest_file),'>f4')
             var_grid = np.reshape(var_grid,dest_file_shapes[dest_file])
 
         if print_level >= 2:
@@ -97,23 +98,24 @@ def stack_monthly_exf_files_to_one(config_dir, config_name, var_name, AngleCS, A
 
     return(output_grid)
 
-def combine_and_rotate_L1_monthly_exf_files(config_dir, config_name, proc_id,start_year,final_year,print_level):
 
-    var_name_list = ['ATEMP','AQH','LWDOWN','SWDOWN','UWIND','VWIND','PRECIP','RUNOFF','IRONDUST','ATMOSCO2']
+def combine_and_rotate_L2_daily_exf_files(config_dir, config_name, proc_id,start_year,final_year,print_level):
+
+    var_name_list = ['ATEMP','AQH','LWDOWN','SWDOWN','UWIND','VWIND','PRECIP','RUNOFF','ATMOSCO2','IRONDUST']
     var_name = var_name_list[proc_id % len(var_name_list)]
 
     grid_file = os.path.join(config_dir,'nc_grids',config_name+'_grid.nc')
     ds = nc4.Dataset(grid_file)
     AngleCS = ds.variables['AngleCS'][:,:]
     AngleSN = ds.variables['AngleSN'][:, :]
-    n_rows_L1 = np.shape(AngleCS)[0]
-    n_cols_L1 = np.shape(AngleCS)[1]
+    n_rows_L2 = np.shape(AngleCS)[0]
+    n_cols_L2 = np.shape(AngleCS)[1]
     ds.close()
 
     years = np.arange(start_year,final_year+1).tolist()
 
     if print_level >=1:
-        print('    - Combining monthly exf files for ' + var_name)
+        print('    - Combining daily exf files for ' + var_name)
 
     for year in years:
 
@@ -121,15 +123,15 @@ def combine_and_rotate_L1_monthly_exf_files(config_dir, config_name, proc_id,sta
             print('        - Combining files in year ' + str(year))
 
         if print_level >=3:
-            print('            - Getting a list of monthly files')
-        dest_files, dest_file_shapes, total_timesteps = get_dest_file_list(var_name, n_rows_L1, n_cols_L1, year)
+            print('            - Getting a list of daily files')
+        dest_files, dest_file_shapes, total_timesteps = get_dest_file_list(var_name, n_rows_L2, n_cols_L2, year)
 
         if print_level >= 1:
-            print('    - Stacking all of the monthly files into a big global file')
-        output_grid = stack_monthly_exf_files_to_one(config_dir, config_name, var_name, AngleCS, AngleSN, dest_files,
+            print('    - Stacking all of the daily files into a big global file')
+        output_grid = stack_daily_exf_files_to_one(config_dir, config_name, var_name, AngleCS, AngleSN, dest_files,
                                                    dest_file_shapes, total_timesteps, print_level)
 
-        output_file = os.path.join(config_dir, 'L1',config_name, 'input', 'exf', 'L1_exf_' + var_name + '_'+str(year))
+        output_file = os.path.join(config_dir, 'L2',config_name, 'input', 'exf', 'L2_exf_' + var_name + '_'+str(year))
         if print_level >= 1:
             print('    - Outputting to ' + output_file)
         output_grid.ravel('C').astype('>f4').tofile(output_file)

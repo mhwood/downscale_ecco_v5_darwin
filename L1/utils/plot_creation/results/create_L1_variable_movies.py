@@ -10,7 +10,7 @@ import argparse
 from matplotlib.patches import Rectangle
 import datetime as dt
 from datetime import datetime, timedelta
-from osgeo import gdal
+#from osgeo import gdal
 import sys
 
 
@@ -30,7 +30,7 @@ def read_field_from_monthly_ncs(config_dir, config_name, results_dir, field_name
         file_prefix = 'EXF_day_snap'
     elif field_name in ['DIC','FeT','NH4','NO2','NO3','PO4','SiO2']:
         file_prefix = 'BGC_daily_consts'
-    elif field_name in ['Chl01','Chl02','Chl03','Chl04','Chl05']:
+    elif field_name in ['Chl01','Chl02','Chl03','Chl04','Chl05','Total_Chl']:
         file_prefix = 'BGC_daily_Chl'
     elif field_name in ['c01','c02','c03','c04','c05','c06','c07']:
         file_prefix = 'BGC_daily_cx'
@@ -90,6 +90,16 @@ def read_field_from_monthly_ncs(config_dir, config_name, results_dir, field_name
                     iter_numbers = ds.variables['iterations'][:]
                     ds.close()
                     field = (uvel ** 2 + vvel ** 2) ** 0.5
+                elif field_name in ['Total_Chl']:
+                    ds = nc4.Dataset(os.path.join(results_dir, file_prefix, file_name))
+                    chl1 = ds.variables['Chl01'][:, :, :]
+                    chl2 = ds.variables['Chl02'][:, :, :]
+                    chl3 = ds.variables['Chl03'][:, :, :]
+                    chl4 = ds.variables['Chl04'][:, :, :]
+                    chl5 = ds.variables['Chl05'][:, :, :]
+                    iter_numbers = ds.variables['iterations'][:]
+                    ds.close()
+                    field = chl1+chl2+chl3+chl4+chl5
                 elif field_name in ['Vorticity','Vorticity_AW']:
                     ds = nc4.Dataset(os.path.join(results_dir, file_prefix, file_name))
                     uvel = ds.variables['Uvel'][:, :, :]
@@ -176,7 +186,10 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
     if np.any(field_grid!=0):
         vmin = np.min(field_grid[field_grid != 0])
         vmax = np.max(field_grid[field_grid != 0])
-        print('  vmin: '+str(vmin)+', vmax: '+str(vmax))
+        #print('  vmin: '+str(vmin)+', vmax: '+str(vmax))
+    if field_name=='Total_Chl':
+        vmin=0
+        vmax=4.5
 
     date = iter_number_to_date(iter_number)
     year = date.year
@@ -192,10 +205,10 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
     ############################################################################
     # make the plot
 
-    fig = plt.figure(figsize=(9, 8))
+    fig = plt.figure(figsize=(9, 12))
     plt.style.use('dark_background')
 
-    gs2 = GridSpec(17, 12, left=0.05, right=0.95, top = 0.95, bottom = 0.05, hspace=0.05)
+    gs2 = GridSpec(17, 14, left=0.05, right=0.95, top = 0.95, bottom = 0.05, hspace=0.05)
 
     ax1 = fig.add_subplot(gs2[:-2, :-1])
 

@@ -19,9 +19,9 @@ def find_dv_files_to_read(config_dir, L1_model_name, boundary, var_name, averagi
     file_names = []
     file_iters = []
     n_files_in_files = []
-    dv_dir = os.path.join(config_dir, 'L0','run', 'dv')#'L1_'+boundary)
+    dv_dir = os.path.join(config_dir, 'L0','run', 'dv', L1_model_name)#'L1_'+boundary)
     for file_name in os.listdir(dv_dir):
-        if L1_model_name in file_name and var_name in file_name and boundary in file_name:
+        if L1_model_name in file_name and var_name in file_name and boundary in file_name and file_name[0]!='.':
             file_iter = int(file_name.split('.')[-2])
             iters_per_file = int(np.size(np.fromfile(os.path.join(dv_dir,file_name),'>f4'))/(points_per_output))
             file_iters.append(file_iter)
@@ -64,7 +64,7 @@ def create_destination_file_list(config_dir, var_name, file_names, iter_midpoint
 
     # create a list of daily bounds
     date_bounds = []
-    for year in range(1992,1993):
+    for year in range(1992,2021):
         for month in range(1, 13):
             if month in [1, 3, 5, 7, 8, 10, 12]:
                 nDays = 31
@@ -177,7 +177,7 @@ def create_L1_exf_ref_file(config_dir, L1_model_name, print_level):
     if print_level>1:
         print('    - Creating the exf field reference for the '+L1_model_name)
 
-    var_name = 'ATEMP'
+    var_name = 'AQH'
     boundary = 'surf'
 
     averaging_period = 21600
@@ -188,20 +188,26 @@ def create_L1_exf_ref_file(config_dir, L1_model_name, print_level):
     ds = nc4.Dataset(mask_ref_file)
     points_per_output = len(ds.groups[L1_model_name+'_'+boundary].variables['source_rows'][:])
     ds.close()
+    print('        - Output_points: '+str(points_per_output))
 
     # calculate the file name iterations to read from
     #     along with the iterations these files cover
+    print('    - Searching for files to read:')
     file_names, iter_midpoint_dict = find_dv_files_to_read(config_dir, L1_model_name, boundary, var_name, averaging_period, seconds_per_iter, points_per_output)
     file_names = sorted(file_names)
+    print('      - Found '+str(len(file_names))+' files')
 
     if print_level>=2:
         print('    - Source file summary:')
     output = '{\n'
     for file_name in file_names:
-        print('        - The file ' + file_name + ' has iterations centered on ' + str(np.min(iter_midpoint_dict[file_name])) +
-              ' to ' + str(np.max(iter_midpoint_dict[file_name])))
-        output += ' \''+file_name.split('.')[-2]+'\': '+'['+str(np.min(iter_midpoint_dict[file_name]))+\
-                  ', '+str(np.max(iter_midpoint_dict[file_name]))+'],\n'
+        if len(iter_midpoint_dict[file_name])>0:
+            print('        - The file ' + file_name + ' has iterations centered on ' + str(np.min(iter_midpoint_dict[file_name])) +
+                  ' to ' + str(np.max(iter_midpoint_dict[file_name])))
+            output += ' \''+file_name.split('.')[-2]+'\': '+'['+str(np.min(iter_midpoint_dict[file_name]))+\
+                      ', '+str(np.max(iter_midpoint_dict[file_name]))+'],\n'
+        else:
+            print('No iters in '+file_name)
     output += '}'
 
     output_file = os.path.join(config_dir,'L1',L1_model_name,'input',L1_model_name+'_exf_source_ref.txt')

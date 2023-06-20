@@ -133,17 +133,17 @@ def read_L0_surface_variable_points(L0_run_dir, model_name, var_name,
         prefix = '_'.join(model_name.split('_')[:2])
         boundary = 'surf'
         if var_name in ['UWIND','VWIND']:
-            u_var_file = os.path.join(L0_run_dir, 'dv',model_name+'_' + boundary + '_UWIND.' + file_suffix)
+            u_var_file = os.path.join(L0_run_dir, 'dv',model_name,model_name+'_' + boundary + '_UWIND.' + file_suffix)
             u_var_grid = np.fromfile(u_var_file, dtype='>f4')
-            v_var_file = os.path.join(L0_run_dir, 'dv',model_name+'_' + boundary + '_VWIND.' + file_suffix)
+            v_var_file = os.path.join(L0_run_dir, 'dv',model_name,model_name+'_' + boundary + '_VWIND.' + file_suffix)
             v_var_grid = np.fromfile(v_var_file, dtype='>f4')
         elif var_name in ['USTRESS','VSTRESS']:
-            u_var_file = os.path.join(L0_run_dir, 'dv',model_name+'_' + boundary + '_USTRESS.' + file_suffix)
+            u_var_file = os.path.join(L0_run_dir, 'dv',model_name,model_name+'_' + boundary + '_USTRESS.' + file_suffix)
             u_var_grid = np.fromfile(u_var_file, dtype='>f4')
-            v_var_file = os.path.join(L0_run_dir, 'dv',model_name+'_' + boundary + '_VSTRESS.' + file_suffix)
+            v_var_file = os.path.join(L0_run_dir, 'dv',model_name,model_name+'_' + boundary + '_VSTRESS.' + file_suffix)
             v_var_grid = np.fromfile(v_var_file, dtype='>f4')
         else:
-            var_file = os.path.join(L0_run_dir, 'dv',model_name+'_'+ boundary + '_' + var_name +'.' + file_suffix)
+            var_file = os.path.join(L0_run_dir, 'dv',model_name,model_name+'_'+ boundary + '_' + var_name +'.' + file_suffix)
             var_grid = np.fromfile(var_file, dtype='>f4')
 
         if var_name in ['UWIND','VWIND','USTRESS','VSTRESS']:
@@ -224,7 +224,7 @@ def create_exf_field(config_dir, ecco_dir, model_name, var_name,
     # Loop through the monthly files
 
     for dest_file in dest_files:
-        if dest_file not in []:#os.listdir(os.path.join(config_dir, 'L1', model_name, 'input', 'exf', var_name)):
+        if dest_file not in os.listdir(os.path.join(config_dir, 'L1', model_name, 'input', 'exf', var_name)):
 
             year = int(dest_file.split('.')[1][:4])
             month = int(dest_file.split('.')[1][4:6])
@@ -320,6 +320,7 @@ def create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
                       start_year, final_year, start_month, final_month, print_level, use_interpolation_grids = True):
 
     var_names = ['ATEMP', 'AQH', 'LWDOWN', 'SWDOWN', 'UWIND', 'VWIND', 'PRECIP','RUNOFF','ATMOSCO2','IRONDUST']
+    # var_names = sroted(var_names)
     var_name = var_names[proc_id % len(var_names)]
 
     print('Creating the exf field for ' + var_name + ' to cover year/month/days ' +

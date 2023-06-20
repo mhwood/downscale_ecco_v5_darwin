@@ -149,17 +149,17 @@ def read_L0_boundary_variable_points(L0_run_dir, model_name, boundary, var_name,
         N = len(faces)
 
         if var_name in ['UVEL','VVEL']:
-            u_var_file = os.path.join(L0_run_dir, 'dv', model_name+'_' + boundary + '_UVEL.' + file_suffix)
+            u_var_file = os.path.join(L0_run_dir, 'dv', model_name, model_name+'_' + boundary + '_UVEL.' + file_suffix)
             u_var_grid = np.fromfile(u_var_file, dtype='>f4')
-            v_var_file = os.path.join(L0_run_dir, 'dv',model_name+'_' + boundary + '_VVEL.' + file_suffix)
+            v_var_file = os.path.join(L0_run_dir, 'dv',model_name, model_name+'_' + boundary + '_VVEL.' + file_suffix)
             v_var_grid = np.fromfile(v_var_file, dtype='>f4')
         elif var_name in ['UICE','VICE']:
-            u_var_file = os.path.join(L0_run_dir, 'dv',model_name+'_' + boundary + '_UICE.' + file_suffix)
+            u_var_file = os.path.join(L0_run_dir, 'dv',model_name, model_name+'_' + boundary + '_UICE.' + file_suffix)
             u_var_grid = np.fromfile(u_var_file, dtype='>f4')
-            v_var_file = os.path.join(L0_run_dir, 'dv',model_name+'_' + boundary + '_VICE.' + file_suffix)
+            v_var_file = os.path.join(L0_run_dir, 'dv',model_name, model_name+'_' + boundary + '_VICE.' + file_suffix)
             v_var_grid = np.fromfile(v_var_file, dtype='>f4')
         else:
-            var_file = os.path.join(L0_run_dir, 'dv', model_name+'_'+ boundary + '_' + var_name +'.' + file_suffix)
+            var_file = os.path.join(L0_run_dir, 'dv', model_name, model_name+'_'+ boundary + '_' + var_name +'.' + file_suffix)
             var_grid = np.fromfile(var_file, dtype='>f4')
 
         if var_name in ['ETAN','AREA','HEFF','HSNOW','UICE','VICE']:
@@ -310,7 +310,7 @@ def downscale_L0_bc_field_to_L1(df, mask_name, var_name,
 
 
 def create_bc_field(config_dir, ecco_dir, L1_model_name, mask_name,
-                    boundary_var_name, dest_files, source_file_read_dict, source_file_read_index_sets, print_level):
+                    boundary_var_name, dest_files, source_file_read_dict, source_file_read_index_sets, print_level, write_to_unbalanced):
 
     sys.path.insert(1, os.path.join(config_dir, 'utils', 'init_file_creation'))
     import downscale_functions as df
@@ -319,7 +319,12 @@ def create_bc_field(config_dir, ecco_dir, L1_model_name, mask_name,
     # this is the dir where the obcs output will be stored
     if 'obcs' not in os.listdir(os.path.join(config_dir,'L1',L1_model_name,'input')):
         os.mkdir(os.path.join(config_dir,'L1',L1_model_name,'input','obcs'))
-    output_dir = os.path.join(config_dir,'L1',L1_model_name,'input','obcs')
+    if write_to_unbalanced:
+        if 'unbalanced' not in os.listdir(os.path.join(config_dir,'L1',L1_model_name,'input','obcs')):
+            os.mkdir(os.path.join(config_dir,'L1',L1_model_name,'input','obcs','unbalanced'))
+        output_dir = os.path.join(config_dir,'L1',L1_model_name,'input','obcs','unbalanced')
+    else:
+        output_dir = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs')
 
     if mask_name not in os.listdir(output_dir):
         os.mkdir(os.path.join(output_dir,mask_name))
@@ -392,84 +397,92 @@ def create_bc_field(config_dir, ecco_dir, L1_model_name, mask_name,
     source_faces, source_rows, source_cols = read_mask_reference_from_nc_dict(nc_dict_file, L1_model_name, mask_name)
 
     for dest_file in dest_files:
-        if dest_file not in []:#os.listdir(os.path.join(output_dir,mask_name,boundary_var_name)):
-            # try:
+        if dest_file not in os.listdir(os.path.join(output_dir,mask_name,boundary_var_name)):
+
             print('    - Downscaling the timesteps to be stored in file ' + str(dest_file))
             source_files = source_file_read_dict[dest_file]
-            source_file_read_indices = source_file_read_index_sets[dest_file]
 
-            if print_level >= 4:
-                print('                - Reading in the L0 diagnostics_vec output')
-            L0_run_dir = os.path.join(config_dir,'L0','run')
-            L0_boundary_points, L0_boundary_values, L0_boundary_point_hFacC = \
-                read_L0_boundary_variable_points(L0_run_dir, L1_model_name, mask_name, boundary_var_name,
-                                                 source_files, source_file_read_indices,
-                                                 llc, boundary_Nr, Nr_in, source_faces, source_rows, source_cols,
-                                                 ecco_XC_faces, ecco_YC_faces, ecco_AngleCS_faces, ecco_AngleSN_faces,
-                                                 ecco_hFacC_faces,
-                                                 print_level)
+            if len(source_files)>0:
+                # try:
 
-            if L1_model_name == 'L1_mac_delta':
-                L0_boundary_points[:,0] += 360
+                source_file_read_indices = source_file_read_index_sets[dest_file]
+
+                if print_level >= 4:
+                    print('                - Reading in the L0 diagnostics_vec output')
+                L0_run_dir = os.path.join(config_dir,'L0','run')
+                L0_boundary_points, L0_boundary_values, L0_boundary_point_hFacC = \
+                    read_L0_boundary_variable_points(L0_run_dir, L1_model_name, mask_name, boundary_var_name,
+                                                     source_files, source_file_read_indices,
+                                                     llc, boundary_Nr, Nr_in, source_faces, source_rows, source_cols,
+                                                     ecco_XC_faces, ecco_YC_faces, ecco_AngleCS_faces, ecco_AngleSN_faces,
+                                                     ecco_hFacC_faces,
+                                                     print_level)
+
+                if L1_model_name == 'L1_mac_delta':
+                    L0_boundary_points[:,0] += 360
 
 
-            # plt.plot(L1_XC_subset,L1_YC_subset,'g.')
-            # plt.plot(L1_points[:,0],L1_points[:,1],'k.')
-            # plt.show()
+                # plt.plot(L1_XC_subset,L1_YC_subset,'g.')
+                # plt.plot(L1_points[:,0],L1_points[:,1],'k.')
+                # plt.show()
 
-            if boundary_var_name in ['THETA', 'SALT', 'UVEL', 'VVEL'] or 'PTRACE' in boundary_var_name:
-                if Nr_out!=Nr_in:
-                    L0_boundary_values, L0_boundary_point_hFacC = df.interpolate_var_points_timeseries_to_new_depth_levels(
-                        L0_boundary_values, L0_boundary_point_hFacC, delR_in, delR_out)
+                if boundary_var_name in ['THETA', 'SALT', 'UVEL', 'VVEL'] or 'PTRACE' in boundary_var_name:
+                    if Nr_out!=Nr_in:
+                        L0_boundary_values, L0_boundary_point_hFacC = df.interpolate_var_points_timeseries_to_new_depth_levels(
+                            L0_boundary_values, L0_boundary_point_hFacC, delR_in, delR_out)
 
-            L0_wet_grid_3D_points = np.copy(L0_boundary_point_hFacC)
-            L0_wet_grid_3D_points[L0_wet_grid_3D_points > 0] = 1
-            L0_wet_grid_on_L1_3D_points = np.copy(L1_wet_grid_3D_subset) # temporary
+                L0_wet_grid_3D_points = np.copy(L0_boundary_point_hFacC)
+                L0_wet_grid_3D_points[L0_wet_grid_3D_points > 0] = 1
+                L0_wet_grid_on_L1_3D_points = np.copy(L1_wet_grid_3D_subset) # temporary
 
-            print('        - Downscaling the output to the new boundary')
-            L1_boundary_var = downscale_L0_bc_field_to_L1(df, mask_name, boundary_var_name,
-                                                          L0_boundary_points, L0_boundary_values,
-                                                          L0_wet_grid_3D_points, L0_wet_grid_on_L1_3D_points,
-                                                          L1_XC_subset, L1_YC_subset, L1_wet_grid_3D_subset, print_level)
+                print('        - Downscaling the output to the new boundary')
+                L1_boundary_var = downscale_L0_bc_field_to_L1(df, mask_name, boundary_var_name,
+                                                              L0_boundary_points, L0_boundary_values,
+                                                              L0_wet_grid_3D_points, L0_wet_grid_on_L1_3D_points,
+                                                              L1_XC_subset, L1_YC_subset, L1_wet_grid_3D_subset, print_level)
 
-            # if 'north' in mask_name or 'south' in mask_name:
-            #     plt.subplot(1,2,1)
-            #     plt.imshow(L1_wet_grid_3D_subset[:,0,:]==0,vmin=-0.1,vmax=0.1,cmap='seismic_r')
-            #     plt.title('Mask')
-            #     plt.subplot(1, 2, 2)
-            #     plt.imshow(L1_boundary_var[0, :, 0, :],cmap='viridis')#,vmin=-0.1,vmax=0.1
-            #     plt.title('L1 (nan values: '+str(np.sum(np.isnan(L1_boundary_var[0,:,0,:]))))
-            #     plt.show()
-            #
-            # if 'east' in mask_name or 'west' in mask_name:
-            #     plt.subplot(1, 2, 1)
-            #     plt.imshow(L1_wet_grid_3D_subset[:, :, 0] == 0, vmin=-0.1, vmax=0.1, cmap='seismic_r')
-            #     plt.title('Mask')
-            #     plt.subplot(1, 2, 2)
-            #     plt.imshow(L1_boundary_var[0, :, :, 0], cmap='viridis')  # ,vmin=-0.1,vmax=0.1
-            #     plt.title('L1 (nan values: ' + str(np.sum(np.isnan(L1_boundary_var[0, :, :, 0]))))
-            #     plt.show()
+                # if 'north' in mask_name or 'south' in mask_name:
+                #     plt.subplot(1,2,1)
+                #     plt.imshow(L1_wet_grid_3D_subset[:,0,:]==0,vmin=-0.1,vmax=0.1,cmap='seismic_r')
+                #     plt.title('Mask')
+                #     plt.subplot(1, 2, 2)
+                #     plt.imshow(L1_boundary_var[0, :, 0, :],cmap='viridis')#,vmin=-0.1,vmax=0.1
+                #     plt.title('L1 (nan values: '+str(np.sum(np.isnan(L1_boundary_var[0,:,0,:]))))
+                #     plt.show()
+                #
+                # if 'east' in mask_name or 'west' in mask_name:
+                #     plt.subplot(1, 2, 1)
+                #     plt.imshow(L1_wet_grid_3D_subset[:, :, 0] == 0, vmin=-0.1, vmax=0.1, cmap='seismic_r')
+                #     plt.title('Mask')
+                #     plt.subplot(1, 2, 2)
+                #     plt.imshow(L1_boundary_var[0, :, :, 0], cmap='viridis')  # ,vmin=-0.1,vmax=0.1
+                #     plt.title('L1 (nan values: ' + str(np.sum(np.isnan(L1_boundary_var[0, :, :, 0]))))
+                #     plt.show()
 
-            if mask_name not in os.listdir(output_dir):
-                os.mkdir(os.path.join(output_dir, mask_name))
-            if boundary_var_name not in os.listdir(os.path.join(output_dir, mask_name)):
-                os.mkdir(os.path.join(output_dir, mask_name, boundary_var_name))
+                if mask_name not in os.listdir(output_dir):
+                    os.mkdir(os.path.join(output_dir, mask_name))
+                if boundary_var_name not in os.listdir(os.path.join(output_dir, mask_name)):
+                    os.mkdir(os.path.join(output_dir, mask_name, boundary_var_name))
 
-            if print_level>=4:
-                print('                 - Output shape: '+str(np.shape(L1_boundary_var)))
+                if print_level>=4:
+                    print('                 - Output shape: '+str(np.shape(L1_boundary_var)))
 
-            # if boundary_var_name in ['UVEL','VVEL','UICE','VICE']:
-            #     output_file = os.path.join(output_dir, mask_name, boundary_var_name, dest_file[:-4]+'_rotated.bin')
-            # else:
-            output_file = os.path.join(output_dir, mask_name, boundary_var_name, dest_file)
-            L1_boundary_var.ravel(order='C').astype('>f4').tofile(output_file)
+                # if boundary_var_name in ['UVEL','VVEL','UICE','VICE']:
+                #     output_file = os.path.join(output_dir, mask_name, boundary_var_name, dest_file[:-4]+'_rotated.bin')
+                # else:
+                output_file = os.path.join(output_dir, mask_name, boundary_var_name, dest_file)
 
-        else:
-            print('    - Skipping ' + str(dest_file) + ' because it was already created')
+                if print_level>=4:
+                    print('                 - Output file: '+str(np.shape(L1_boundary_var)))
+
+                L1_boundary_var.ravel(order='C').astype('>f4').tofile(output_file)
+
+            else:
+                print('    - Skipping ' + str(dest_file) + ' because it was already created')
 
 def create_bc_fields_via_interpolation(config_dir, ecco_dir, L1_model_name, boundaries, proc_id,
                                        start_year, final_year, start_month,
-                                       final_month, print_level):
+                                       final_month, print_level,write_to_unbalanced = True):
 
     if L1_model_name in ['L1_W_Greenland','L1_mac_delta']:
         var_names = ['THETA','SALT','UVEL','VVEL','UICE','VICE','HSNOW','HEFF','AREA']
@@ -497,7 +510,7 @@ def create_bc_fields_via_interpolation(config_dir, ecco_dir, L1_model_name, boun
 
     print('  Running the Downscale routine:')
     create_bc_field(config_dir, ecco_dir,  L1_model_name, mask_name, var_name, dest_files,
-                    source_file_read_dict, source_file_read_index_sets, print_level)
+                    source_file_read_dict, source_file_read_index_sets, print_level, write_to_unbalanced)
 
 
 if __name__ == '__main__':
