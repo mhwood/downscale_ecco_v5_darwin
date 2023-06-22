@@ -12,9 +12,9 @@ Then, with the package activated, first install the following packages:
 ```
 conda install numpy
 conda install matplotlib
-Conda install scipy
-Conda install pyproj
-Conda install netcdf4
+conda install scipy
+conda install pyproj
+conda install netcdf4
 conda install -c conda-forge xesmf
 ```
 Next, install the required [simplegrid](https://github.com/nasa/simplegrid) package, which is not available by `pip` or `conda install`. Instead, it must be cloned and then installed locally: 
