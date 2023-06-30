@@ -190,6 +190,9 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
     if field_name=='Total_Chl':
         vmin=0
         vmax=4.5
+    if field_name=='EtaN':
+        vmin=-2.5
+        vmax=-1.5
 
     date = iter_number_to_date(iter_number)
     year = date.year
@@ -216,6 +219,7 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
         ax1.imshow(background_image, extent=extents, alpha=0.7)
 
     plot_grid = np.copy(field_grid[i, :, :])
+    print('        - range: ',np.min(plot_grid),np.max(plot_grid))
     if 'AW' in field_name:
         plot_grid = np.ma.masked_where(plot_grid==0,plot_grid)
         # land_mask = np.ma.masked_where(land_mask,plot_grid==0)
@@ -318,6 +322,7 @@ def create_variable_movies(config_dir, config_name, field_names, metadata_dict, 
 
         all_dates = []
         for iter_number in all_iter_numbers:
+
             date = iter_number_to_date(iter_number[0])
             ymd_string = str(date.year)+'{:02d}'.format(date.month)+'{:02d}'.format(date.day)
             all_dates.append(ymd_string)

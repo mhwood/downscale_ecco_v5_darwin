@@ -14,11 +14,11 @@ def create_src_dest_dicts_from_ref(config_dir, L1_model_name, mask_name, var_nam
     dest_files = []
     start_date = datetime(start_year, 1, 1)
     final_date = datetime(final_year, 12, 31)
-    for year in range(1992,2022):
+    for year in range(start_year, final_year):
         for month in range(1, 13):
-            test_date = datetime(year, month, 15)
-            if test_date >= start_date and test_date <= final_date:
-                dest_files.append(str(year) + '{:02d}'.format(month))
+            # test_date = datetime(year, month, 15)
+            # if test_date >= start_date and test_date <= final_date:
+            dest_files.append(str(year) + '{:02d}'.format(month))
 
     f = open(os.path.join(config_dir,'L1',L1_model_name, 'input', L1_model_name+'_BC_dest_ref.txt'))
     dict_str = f.read()
@@ -460,6 +460,122 @@ def create_timeseries(config_dir, ecco_dir, L1_model_name, boundaries,
                            boundaries, all_boundary_points, all_boundary_hfacs,
                            all_mean_flux_grids, all_integrated_flux_timeseries)
 
+def create_annual_timeseries(config_dir, ecco_dir, L1_model_name, boundaries,
+                      boundary_var_name, start_year, final_year, print_level):
+
+    sys.path.insert(1, os.path.join(config_dir, 'utils', 'init_file_creation'))
+    import downscale_functions as df
+    import ecco_functions as ef
+
+    # this is the dir where the obcs output will be stored
+    if 'obcs' not in os.listdir(os.path.join(config_dir,'L1',L1_model_name,'input')):
+        os.mkdir(os.path.join(config_dir,'L1',L1_model_name,'input','obcs'))
+    if 'timeseries' not in os.listdir(os.path.join(config_dir, 'L1', L1_model_name, 'input','obcs')):
+        os.mkdir(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs','timeseries'))
+    if 'L0_timeseries' not in os.listdir(os.path.join(config_dir, 'L1', L1_model_name, 'input','obcs','timeseries')):
+        os.mkdir(os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs','timeseries','L0_timeseries'))
+    output_dir = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'timeseries', 'L0_timeseries')
+
+
+    if print_level >= 1:
+        print('    - Reading in the ECCO geometry')
+    llc = 270
+    ecco_XC_faces, ecco_YC_faces, ecco_DXG_faces, ecco_DYG_faces, ecco_hFacS_faces, ecco_hFacW_faces = \
+        read_flux_ecco_geometry_to_faces(ef, ecco_dir, llc)
+
+    Nr_in = 50
+    delR = np.array([10.00, 10.00, 10.00, 10.00, 10.00, 10.00, 10.00, 10.01,
+                        10.03, 10.11, 10.32, 10.80, 11.76, 13.42, 16.04, 19.82, 24.85,
+                        31.10, 38.42, 46.50, 55.00, 63.50, 71.58, 78.90, 85.15, 90.18,
+                        93.96, 96.58, 98.25, 99.25, 100.01, 101.33, 104.56, 111.33, 122.83,
+                        139.09, 158.94, 180.83, 203.55, 226.50, 249.50, 272.50, 295.50, 318.50,
+                        341.50, 364.50, 387.50, 410.50, 433.50, 456.50])
+
+    for year in range(start_year, final_year + 1):
+
+        all_mean_flux_grids = []
+        all_integrated_flux_timeseries = []
+        all_boundary_points = []
+        all_boundary_hfacs = []
+
+        if str(year) not in os.listdir(output_dir):
+            os.mkdir(os.path.join(output_dir, str(year)))
+        output_file_name = 'L0_' + L1_model_name[3:] + '_' + boundary_var_name + '_boundary_flux_'+str(year)+'.nc'
+
+        if output_file_name not in os.listdir(os.path.join(output_dir, str(year))):
+
+            for mask_name in boundaries:
+
+                dest_files, source_file_read_dict, source_file_read_index_sets = \
+                    create_src_dest_dicts_from_ref(config_dir, L1_model_name, mask_name, boundary_var_name, year, year+1)
+
+                boundary_Nr = get_boundary_Nr_from_manual_list(L1_model_name,mask_name)
+
+                print('    - Reading the mask to reference the variable to the llc grid')
+                nc_dict_file = os.path.join(config_dir,'L0','input','L0_dv_mask_reference_dict.nc')
+                source_faces, source_rows, source_cols = read_mask_reference_from_nc_dict(nc_dict_file, L1_model_name, mask_name)
+
+                L0_boundary_points_manually_selected = read_flux_points_from_shapefile(config_dir,L1_model_name,mask_name)
+
+                timestep_counter = 0
+                mean_flux_grid = np.zeros((len(delR), len(L0_boundary_points_manually_selected)))
+
+                if year % 4 == 0:
+                    total_timesteps = 366
+                else:
+                    total_timesteps = 365
+                integrated_flux_timeseries = np.zeros((total_timesteps,))
+
+                for dest_file in dest_files:
+
+                    print('    - Integrating the fluxes for ' + str(dest_file))
+                    source_files = source_file_read_dict[dest_file]
+
+                    if len(source_files)>0:
+
+                        source_file_read_indices = source_file_read_index_sets[dest_file]
+
+                        if print_level >= 4:
+                            print('                - Reading in the L0 diagnostics_vec output')
+                        L0_run_dir = os.path.join(config_dir,'L0','run')
+                        L0_boundary_points, L0_boundary_values, L0_boundary_vel_values, L0_boundary_points_hFac = \
+                            read_L0_boundary_variable_points(L0_run_dir, L1_model_name, mask_name, boundary_var_name,
+                                                             source_files, source_file_read_indices,
+                                                             llc, boundary_Nr, Nr_in, source_faces, source_rows, source_cols,
+                                                             ecco_XC_faces, ecco_YC_faces, ecco_DXG_faces, ecco_DYG_faces,
+                                                             ecco_hFacS_faces, ecco_hFacW_faces,
+                                                             print_level)
+
+                        L0_boundary_points_subset, L0_boundary_values_subset, L0_boundary_vel_values_subset, L0_boundary_points_hFac_subset = \
+                            subset_points_to_flux_boundary(L0_boundary_points_manually_selected,
+                                                           L0_boundary_points, L0_boundary_values, L0_boundary_vel_values, L0_boundary_points_hFac)
+
+                        flux_grid = calculate_boundary_flux(mask_name,L0_boundary_points_subset, L0_boundary_values_subset,
+                                                                  L0_boundary_vel_values_subset, L0_boundary_points_hFac_subset, delR, boundary_Nr)
+
+                        mean_flux_grid += np.sum(flux_grid, axis=0)
+                        integrated_flux_timeseries[timestep_counter:timestep_counter + np.shape(flux_grid)[0]] = np.sum(np.sum(flux_grid, axis=1), axis=1)
+                        timestep_counter += np.shape(flux_grid)[0]
+
+                        # output_file = os.path.join(output_dir,mask_name,boundary_var_name,dest_file)
+                        # write_timeseries_to_nc(output_file, boundary_var_name, flux_timeseries)
+
+                        # plt.plot(L0_boundary_points[:,0],L0_boundary_points[:,1],'k.')
+                        # plt.plot(L0_boundary_points_subset[:, 0], L0_boundary_points_subset[:, 1], 'g.')
+                        # plt.show()
+
+                all_boundary_points.append(L0_boundary_points_subset)
+                all_boundary_hfacs.append(L0_boundary_points_hFac_subset)
+
+                all_mean_flux_grids.append(mean_flux_grid / timestep_counter)
+                all_integrated_flux_timeseries.append(integrated_flux_timeseries)
+
+            output_file = os.path.join(output_dir, str(year),output_file_name)
+            output_L0_fluxes_to_nc(output_file, delR, # Depth, drF,
+                                   boundaries, all_boundary_points, all_boundary_hfacs,
+                                   all_mean_flux_grids, all_integrated_flux_timeseries)
+
+
 def create_L0_timeseries(config_dir, ecco_dir, L1_model_name, boundaries, proc_id,
                          start_year, final_year, print_level):
 
@@ -479,7 +595,7 @@ def create_L0_timeseries(config_dir, ecco_dir, L1_model_name, boundaries, proc_i
     print('Creating the L0 timeseries for ' + var_name + ' to cover years ' + str(start_year)+' to ' + str(final_year))
 
     print('  Running the timeseries routine:')
-    create_timeseries(config_dir, ecco_dir,  L1_model_name, boundaries, var_name, start_year, final_year, print_level)
+    create_annual_timeseries(config_dir, ecco_dir,  L1_model_name, boundaries, var_name, start_year, final_year, print_level)
 
 
 if __name__ == '__main__':

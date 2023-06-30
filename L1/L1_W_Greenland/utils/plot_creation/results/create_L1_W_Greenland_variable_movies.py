@@ -6,7 +6,7 @@ import argparse
 import sys
 import cmocean.cm as cm
 
-def create_movies(config_dir, print_level):
+def create_movies(config_dir, field_name, print_level):
 
     L1_model_name = 'L1_W_Greenland'
 
@@ -30,8 +30,10 @@ def create_movies(config_dir, print_level):
 
     etan_fields = ['EtaN']
 
-    field_names = vel_fields + Chl_fields + const_fields + DO_fields + cx_fields + PO_fields + misc_fields + TS_fields + etan_fields
-    field_names = ['Total_Chl']
+    if field_name=='All':
+        field_names = vel_fields + Chl_fields + const_fields + DO_fields + cx_fields + PO_fields + misc_fields + TS_fields + etan_fields
+    else:
+        field_names=[field_name]
 
     metadata_dict = {'EtaN': [0, 1, 'viridis', 'm', 'Surface Height Anomaly'],
                      'Theta': [10, 25, 'turbo', '$^{\circ}$C', 'Potential Temperature (Surface)'],
@@ -76,7 +78,7 @@ def create_movies(config_dir, print_level):
                      'Total_Chl': [0, 1, 'turbo', 'mg/m$^3$', ''],
                      'SIarea': [0, 1, cm.ice, '', '']}
 
-    remove_old = False
+    remove_old = True
     skip = False
 
     # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
@@ -91,9 +93,14 @@ if __name__ == '__main__':
                         help="The directory where the L1, L2, and L1 configurations are stored.", dest="config_dir",
                         type=str, required=True)
 
+    parser.add_argument("-f", "--field_name", action="store",
+                        help="The directory where the L1, L2, and L1 configurations are stored.", dest="field_name",
+                        type=str, required=True)
+
     args = parser.parse_args()
     config_dir = args.config_dir
+    field_name = args.field_name
 
-    create_movies(config_dir, print_level=4)
+    create_movies(config_dir, field_name, print_level=4)
    
 

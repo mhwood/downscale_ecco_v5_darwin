@@ -17,36 +17,36 @@ def YMD_to_DecYr(year,month,day,hour=0,minute=0,second=0):
     dec_yr = year+decimal_fraction
     return(dec_yr)
 
-def read_flux_timeseries(config_dir, L1_model_name, boundaries, field_name, level='L1', balanced = True):
+def read_flux_timeseries(config_dir, L1_model_name, boundaries,year,field_name, level='L1', balanced = True):
 
     dec_yr = []
 
     # make the dec yr array
-    for year in range(1992,2030):
+    for yr in range(1992,2030):
         for month in range(1,13):
             if month in [1, 3, 5, 7, 8, 10, 12]:
                 nDays = 31
             elif month in [4, 6, 9, 11]:
                 nDays = 30
             else:
-                if year % 4 == 0:
+                if yr % 4 == 0:
                     nDays = 29
                 else:
                     nDays = 28
             for d in range(1,nDays+1):
-                dec_yr.append(YMD_to_DecYr(year,month,d))
+                dec_yr.append(YMD_to_DecYr(yr,month,d))
 
     time = np.array(dec_yr)
 
     if level=='L1' and balanced:
         file_path = os.path.join(config_dir,'L1',L1_model_name,'input','obcs',
-                                     'timeseries','L1_timeseries','balanced',L1_model_name+'_'+field_name+'_boundary_flux.nc')
+                                     'timeseries','L1_timeseries','balanced',year,L1_model_name+'_'+field_name+'_boundary_flux_'+year+'.nc')
     if level=='L1' and not balanced:
         file_path = os.path.join(config_dir,'L1',L1_model_name,'input','obcs',
-                                     'timeseries','L1_timeseries','unbalanced',L1_model_name+'_'+field_name+'_boundary_flux.nc')
+                                     'timeseries','L1_timeseries','unbalanced',year,L1_model_name+'_'+field_name+'_boundary_flux_'+year+'.nc')
     if level=='L0':
         file_path = os.path.join(config_dir,'L1',L1_model_name,'input','obcs',
-                                     'timeseries','L0_timeseries','L0_'+L1_model_name[3:]+'_'+field_name+'_boundary_flux.nc')
+                                     'timeseries','L0_timeseries',year,'L0_'+L1_model_name[3:]+'_'+field_name+'_boundary_flux_'+year+'.nc')
 
     all_timeseries = []
     for boundary in boundaries:
@@ -192,33 +192,23 @@ def balance_bc_field(config_dir, L1_model_name, boundaries, var_name, start_year
     rA, dxG, dyG, hFacS, hFacW, delR = read_grid_information(config_dir, L1_model_name)
     Nr = len(delR)
 
-    # step 1: read the flux timeseries for a given year
-    L1_time, all_L1_balanced_velocity_timeseries = read_flux_timeseries(config_dir, L1_model_name, boundaries, 'VEL', balanced=True)
-    L1_time, all_L1_unbalanced_timeseries = read_flux_timeseries(config_dir, L1_model_name, boundaries, var_name, balanced=False)
-    L0_time, all_L0_timeseries = read_flux_timeseries(config_dir, L1_model_name, boundaries, var_name, level='L0')
+    for year in range(start_year, final_year+1):
 
+        # step 1: read the flux timeseries for a given year
+        L1_time, all_L1_balanced_velocity_timeseries = read_flux_timeseries(config_dir, L1_model_name, boundaries,str(year),'VEL', balanced=True)
+        L1_time, all_L1_unbalanced_timeseries = read_flux_timeseries(config_dir, L1_model_name, boundaries, str(year),var_name, balanced=False)
+        L0_time, all_L0_timeseries = read_flux_timeseries(config_dir, L1_model_name, boundaries, str(year),var_name, level='L0')
 
+        for b in range(len(boundaries)):
+            boundary = boundaries[b]
 
-    for b in range(len(boundaries)):
-        boundary = boundaries[b]
-
-        _, dest_files_per_year = create_dest_file_list(boundary, var_name, start_year, final_year)
-
-        for year in range(start_year, final_year+1):
+            _, dest_files_per_year = create_dest_file_list(boundary, var_name, start_year, final_year)
 
             start_index = 0
-            end_index = 366
-            # make the dec yr array
-            for yr in range(1992, 2030):
-                if yr < year:
-                    if yr % 4 == 0:
-                        start_index += 366
-                    else:
-                        start_index += 365
-                    if (yr + 1) % 4 == 0:
-                        end_index += 365
-                    else:
-                        end_index += 366
+            if year % 4 == 0:
+                end_index = 366
+            else:
+                end_index = 365
 
             L0_timeseries = all_L0_timeseries[b][start_index:end_index]
             L1_timeseries = all_L1_unbalanced_timeseries[b][start_index:end_index]

@@ -241,6 +241,111 @@ def create_timeseries(config_dir, L1_model_name, balanced, boundaries,
     output_L1_fluxes_to_nc(output_file, Depth, dxG, dyG, hFacS, hFacW, drF,
                            boundaries, all_mean_flux_grids, all_integrated_flux_timeseries)
 
+def create_annual_timeseries(config_dir, L1_model_name, balanced, boundaries,
+                      boundary_var_name, start_year, end_year, print_level):
+
+    sys.path.insert(1, os.path.join(config_dir, 'utils', 'init_file_creation'))
+    import downscale_functions as df
+    import flux_functions as ff
+
+    if print_level >= 1:
+        print('    - Reading in the '+L1_model_name+' geometry')
+
+    if balanced:
+        balanced_dir = 'balanced'
+    else:
+        balanced_dir = 'unbalanced'
+
+    output_dir = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'timeseries', 'L1_timeseries', balanced_dir)
+
+
+    Depth, dxG, dyG, hFacS, hFacW, drF = read_grid_information(config_dir, L1_model_name)
+    n_rows = np.shape(Depth)[0]
+    n_cols = np.shape(Depth)[1]
+    Nr = len(drF)
+
+    for year in range(start_year, end_year + 1):
+
+        all_mean_flux_grids = []
+        all_integrated_flux_timeseries = []
+
+        if str(year) not in os.listdir(output_dir):
+            os.mkdir(os.path.join(output_dir, str(year)))
+        output_file_name = L1_model_name + '_' + boundary_var_name + '_boundary_flux_' + str(year) + '.nc'
+
+        if output_file_name not in os.listdir(os.path.join(output_dir, str(year))):
+
+            for mask_name in boundaries:
+                print('    - Calculating fluxes on the '+mask_name+' boundary')
+
+                _, dest_files_per_year = create_dest_file_list(mask_name, boundary_var_name, year, year+1)
+
+                timestep_counter = 0
+                if mask_name in ['north', 'south']:
+                    mean_flux_grid = np.zeros((Nr,n_cols))
+                if mask_name in ['west', 'east']:
+                    mean_flux_grid = np.zeros((Nr,n_rows))
+
+                if year%4==0:
+                    total_timesteps=366
+                else:
+                    total_timesteps=365
+                integrated_flux_timeseries = np.zeros((total_timesteps,))
+
+                print('        - Adding data from year '+str(year)+' on the '+mask_name+' boundary')
+                if mask_name in ['north','south']:
+                    velocity_file = 'L1_BC_'+mask_name+'_VVEL_'+str(year)
+                    velocity_file_path = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
+                                                      'balanced', mask_name, 'VVEL', velocity_file)
+                if mask_name in ['west','east']:
+                    velocity_file = 'L1_BC_'+mask_name+'_UVEL_'+str(year)
+                    velocity_file_path = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
+                                                      'balanced', mask_name, 'UVEL', velocity_file)
+
+                # read in the velocity grid
+                velocity_grid = read_annual_velocity_file(velocity_file_path,mask_name,n_rows,n_cols,Nr)
+                if print_level>3:
+                    print('            - Velocity shape: '+str(np.shape(velocity_grid)))
+
+                if not balanced:
+                    if boundary_var_name!='VEL':
+                        # read in the monthly tracer files to the annual file
+                        tracer_dir = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
+                                                          balanced_dir, mask_name, boundary_var_name)
+                        tracer_grid = read_monthly_tracer_files(tracer_dir, dest_files_per_year[year], year, mask_name, n_rows, n_cols, Nr)
+                    else:
+                        # tracers are 1 for the vel grid because there is no scalar factor when calculating the fluxes
+                        tracer_grid = np.copy(velocity_grid)
+                        tracer_grid[velocity_grid!=0] = 1
+                else:
+                    if boundary_var_name!='VEL':
+                        tracer_file = 'L1_BC_' + mask_name + '_'+boundary_var_name+'_' + str(year)
+                        tracer_file_path = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs',
+                                                          'balanced', mask_name, boundary_var_name, tracer_file)
+                        tracer_grid = read_annual_velocity_file(tracer_file_path,mask_name,n_rows,n_cols,Nr)
+                    else:
+                        tracer_grid = np.copy(velocity_grid)
+                        tracer_grid[velocity_grid != 0] = 1
+
+                # calculate the fluxes for this grid
+                flux_grid = ff.calculate_flux_into_domain(mask_name, boundary_var_name,
+                                           velocity_grid, tracer_grid,
+                                           dxG, dyG, drF, hFacS, hFacW, apply_density = False)
+
+                mean_flux_grid += np.sum(flux_grid,axis=0)
+                integrated_flux_timeseries[timestep_counter:timestep_counter+np.shape(flux_grid)[0]] = np.sum(np.sum(flux_grid,axis=1),axis=1)
+                timestep_counter += np.shape(flux_grid)[0]
+
+                # plt.plot(integrated_flux_timeseries)
+                # plt.show()
+
+                all_mean_flux_grids.append(mean_flux_grid/timestep_counter)
+                all_integrated_flux_timeseries.append(integrated_flux_timeseries)
+
+            output_file = os.path.join(output_dir, str(year), output_file_name)
+            output_L1_fluxes_to_nc(output_file, Depth, dxG, dyG, hFacS, hFacW, drF,
+                                   boundaries, all_mean_flux_grids, all_integrated_flux_timeseries)
+
 
 def create_L1_timeseries(config_dir, L1_model_name, boundaries, proc_id,
                          start_year, final_year, balanced, print_level):
@@ -262,7 +367,7 @@ def create_L1_timeseries(config_dir, L1_model_name, boundaries, proc_id,
           str(start_year)+' to ' + str(final_year))
 
     print('  Running the timeseries routine:')
-    create_timeseries(config_dir, L1_model_name, balanced, boundaries, var_name, start_year, final_year, print_level)
+    create_annual_timeseries(config_dir, L1_model_name, balanced, boundaries, var_name, start_year, final_year, print_level)
 
 
 if __name__ == '__main__':

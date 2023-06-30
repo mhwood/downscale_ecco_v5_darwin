@@ -270,7 +270,7 @@ def combine_and_rotate_L1_monthly_bcs(config_dir, L1_model_name, boundaries, var
                         output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'annual',
                                                    'L1_BC_' + mask_name + '_' + var_name + '_' + str(year))
 
-                if True:#not os.path.exists(output_file):
+                if not os.path.exists(output_file):
 
                     if print_level >= 2:
                         print('        - Combining files in year ' + str(year))

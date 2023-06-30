@@ -8,7 +8,7 @@ import sys
 import ast
 
 
-def create_seaice_pickup(config_dir, ecco_dir, print_level):
+def create_seaice_pickup_file(config_dir, ecco_dir, print_level):
 
     L1_model_name = 'L1_W_Greenland'
 
