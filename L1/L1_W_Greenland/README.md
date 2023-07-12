@@ -15,11 +15,14 @@ python3 init_file_creation/create_L1_W_Greenland_mitgrid.py -d /path/to/config/d
 ```
 
 ## Step 2: Creating the bathymetry
-This configuration uses bathymetry from the LLC1080 grid bathymeetry. To generate this file, use the following script:
+This configuration uses bathymetry from the LLC1080 grid bathymetry. To generate this file, use the following script:
 file:
 ```
 python3 init_file_creation/create_L1_W_Greenland_bathymetry.py -d /path/to/config/dir -e /path/to/ECCO/dir
 ```
+
+## Step 2.5 Intermediate Step: Make an nc file for the model grid
+The initial condtions, boundary conditions, and external forcing conditions all must be interpolated from the "parent" model to the new downscaled model. To easily generate the grid as a complete netcdf file, my strategy is to set up the model and run for one time step, outputting the grid using the mnc package. For this model run, 
 
 ### Step 3: Create the initial conditions
 The initial conditions for the subdomain are stored in a pickup file for convenience. To generate this pickup file, an equivalent pickup file from the L0_540 run is interpolated into the new grid. For our investigation, we used a pickup file 1 year (175,680 time steps) into the L0_540 simulation, located in the L0_540/run directory: pickup.0000175680.data. Note also that the code will use the tile004.mitgrid and tile005.mitgrid files, which are expected to be located in the L0_540/run directory. To generate the new pickup file, run the following code:
