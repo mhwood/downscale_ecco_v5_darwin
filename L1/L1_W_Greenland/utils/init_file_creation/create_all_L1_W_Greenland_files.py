@@ -16,8 +16,8 @@ def create_L1_W_Greenland_files(config_dir, ecco_dir):
 
     print_level = 5
 
-    steps = [3,4, 5, 6]
-    steps = [2]
+    steps = [3, 4, 5, 6]
+    steps = [8]
 
     # step 1: make the grid
     if 1 in steps:
@@ -72,13 +72,13 @@ def create_L1_W_Greenland_files(config_dir, ecco_dir):
     if 7 in steps:
         print('Step 7: Creating the external forcing conditions for the ' + L1_model_name + ' model')
         import create_L1_W_Greenland_exf as ce
-        ce.create_exf_files(config_dir, L1_model_name, parent_model_level, parent_model_name, print_level)
+        ce.create_exf_files(config_dir, ecco_dir,  print_level)
 
     # step 8: make the boundary conditions
     if 8 in steps:
         print('Step 8: Creating the boundary conditions for the ' + L1_model_name + ' model')
         import create_L1_W_Greenland_BCs as cbc
-        cbc.create_BCs(config_dir, parent_model_name, L1_model_name, print_level)
+        cbc.create_BCs(config_dir, ecco_dir, print_level)
 
     # step 9: make the dv masks
     if 9 in steps:

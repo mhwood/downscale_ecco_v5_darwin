@@ -215,16 +215,14 @@ def create_L1_W_Greenland_bathymetry(config_dir, ecco_dir, print_status = 4):
     # close off hudson bay
     bathy_grid_filled[260:315, 150:160] = 0
 
-
+    for i in range(434,445):
+        bathy_grid_filled[i, -2] = 0
+        bathy_grid_filled[i, -1] = 0
 
     bathy_grid_filled = fill_unconnected_areas(bathy_grid_filled)
 
     # # fill in some annoying edge issues
     # bathy_grid_filled[440:444, 538:] = 0
-
-    for i in range(430,444):
-        if bathy_grid_filled[i,-2]>-12.77:
-            bathy_grid_filled[i, -2]=-12.77
 
     plt.imshow(bathy_grid_filled[430:450, 500:], origin='lower', vmin=-20, vmax=0)
     plt.show()

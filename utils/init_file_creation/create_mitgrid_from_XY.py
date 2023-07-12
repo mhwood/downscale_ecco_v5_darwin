@@ -3,7 +3,6 @@ import os
 import simplegrid as sg
 import numpy as np
 import matplotlib.pyplot as plt
-from ecco_v4_py import read_llc_to_tiles, read_llc_to_faces
 import pyproj
 import argparse
 
@@ -24,17 +23,19 @@ def create_new_mitgrid(output_file,mitgrid_matrices,XG,YG,factor):
                          lon2=XG[-1, -1], lat2=YG[-1, -1],
                          verbose=False, outfile = output_file)
 
+    print('    - Output shape: ('+str(n_rows)+', '+str(n_cols)+')')
+
     sg.gridio.write_mitgridfile(output_file, mg_new, n_rows, n_cols)
 
-def create_mitgrid_file(config_dir,L1_model_name,XC,YC,XG,YG,print_level):
+def create_mitgrid_file(config_dir,model_level,model_name,XC,YC,XG,YG,print_level):
 
     domain_coords = [XC, YC, XG, YG]
 
     mitgrid_matrices = create_mitgrid_matrices(domain_coords)
 
     if print_level >=1:
-        print('    - Generating mitgrid for the '+L1_model_name+' domain')
+        print('    - Generating mitgrid for the '+model_name+' domain')
         print('        - Simplegrid is slow, this may take minute or two')
-    output_file = os.path.join(config_dir,'L1',L1_model_name,'input',L1_model_name+'.mitgrid')
+    output_file = os.path.join(config_dir,model_level,model_name,'input',model_name+'.mitgrid')
 
     create_new_mitgrid(output_file, mitgrid_matrices, XG, YG, factor=1)

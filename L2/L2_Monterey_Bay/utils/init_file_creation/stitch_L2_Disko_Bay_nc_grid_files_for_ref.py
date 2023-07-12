@@ -20,12 +20,7 @@ def read_L2_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_non
 
     stitched_DXC = np.zeros((sNy * len(ordered_nonblank_tiles), sNx * len(ordered_nonblank_tiles[0]) + 1))
     stitched_DYC = np.zeros((sNy * len(ordered_nonblank_tiles) + 1, sNx * len(ordered_nonblank_tiles[0])))
-
-    stitched_DXG = np.zeros((sNy * len(ordered_nonblank_tiles) + 1, sNx * len(ordered_nonblank_tiles[0])))
-    stitched_DYG = np.zeros((sNy * len(ordered_nonblank_tiles), sNx * len(ordered_nonblank_tiles[0]) + 1))
-
     stitched_Depth = np.zeros((sNy * len(ordered_nonblank_tiles), sNx * len(ordered_nonblank_tiles[0])))
-    stitched_rA = np.zeros((sNy * len(ordered_nonblank_tiles), sNx * len(ordered_nonblank_tiles[0])))
 
     stitched_hFacC = np.zeros((Nr, sNy * len(ordered_nonblank_tiles), sNx * len(ordered_nonblank_tiles[0])))
     stitched_hFacS = np.zeros((Nr, sNy * len(ordered_nonblank_tiles) + 1, sNx * len(ordered_nonblank_tiles[0])))
@@ -40,8 +35,7 @@ def read_L2_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_non
             tile_number = ordered_nonblank_tiles[r][c]
             for n in range(N):
                 if 'grid.t'+'{:03d}'.format(tile_number)+'.nc' in os.listdir(os.path.join(grid_dir,'mnc_'+'{:04d}'.format(n+1))):
-                    ds = nc4.Dataset(os.path.join(grid_dir, 'mnc_' + '{:04d}'.format(n + 1),
-                                                  'grid.t' + '{:03d}'.format(tile_number) + '.nc'))
+                    ds = nc4.Dataset(os.path.join(grid_dir,'mnc_'+'{:04d}'.format(n+1),'grid.t'+'{:03d}'.format(tile_number)+'.nc'))
                     XC = ds.variables['XC'][:, :]
                     YC = ds.variables['YC'][:, :]
                     XG = ds.variables['XG'][:, :]
@@ -50,14 +44,11 @@ def read_L2_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_non
                     AngleSN = ds.variables['AngleSN'][:, :]
                     DXC = ds.variables['dxC'][:, :]
                     DYC = ds.variables['dyC'][:, :]
-                    DXG = ds.variables['dxG'][:, :]
-                    DYG = ds.variables['dyG'][:, :]
                     hFacC = ds.variables['HFacC'][:, :, :]
                     hFacS = ds.variables['HFacS'][:, :, :]
                     hFacW = ds.variables['HFacW'][:, :, :]
                     DRF = ds.variables['drF'][:]
                     Depth = ds.variables['Depth'][:, :]
-                    rA = ds.variables['rA'][:, :]
                     ds.close()
 
                     stitched_XC[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = XC
@@ -72,24 +63,19 @@ def read_L2_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_non
                     stitched_DXC[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx+1] = DXC
                     stitched_DYC[r * sNy:(r + 1) * sNy+1, c * sNx:(c + 1) * sNx] = DYC
 
-                    stitched_DXG[r * sNy:(r + 1) * sNy + 1, c * sNx:(c + 1) * sNx] = DXG
-                    stitched_DYG[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx + 1] = DYG
-
                     stitched_hFacC[:, r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = hFacC
                     stitched_hFacS[:, r * sNy:(r + 1) * sNy + 1, c * sNx:(c + 1) * sNx] = hFacS
                     stitched_hFacW[:, r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx + 1] = hFacW
 
                     stitched_Depth[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = Depth
-                    stitched_rA[r * sNy:(r + 1) * sNy, c * sNx:(c + 1) * sNx] = rA
 
-    return(stitched_XC, stitched_YC, stitched_XG, stitched_YG, stitched_AngleCS, stitched_AngleSN,
-           stitched_DXC, stitched_DYC, stitched_DXG, stitched_DYG,
+    return(stitched_XC, stitched_YC, stitched_XG, stitched_YG, stitched_AngleCS, stitched_AngleSN, stitched_DXC, stitched_DYC,
            stitched_hFacC, stitched_hFacS, stitched_hFacW,
-           stitched_Depth, stitched_rA, DRF)
+           stitched_Depth, DRF)
 
 
 def write_grid_to_nc(config_dir, model_name,
-                     XC, YC, XG, YG, AngleCS, AngleSN, DXC, DYC, DXG, DYG, hFacC, hFacS, hFacW, DRF, Depth, rA):
+                     XC, YC, XG, YG, AngleCS, AngleSN, DXC, DYC, hFacC, hFacS, hFacW, DRF, Depth):
 
     output_path = os.path.join(config_dir, 'nc_grids', model_name+'_grid.nc')
 
@@ -107,8 +93,8 @@ def write_grid_to_nc(config_dir, model_name,
     var = ds.createVariable('YC', 'f4', ('Y', 'X'))
     var[:, :] = YC
 
-    var = ds.createVariable('XG', 'f4', ('Y', 'X'))
-    var[:, :] = XG
+    var = ds.createVariable('XG','f4',('Y','X'))
+    var[:,:] = XG
 
     var = ds.createVariable('YG', 'f4', ('Y', 'X'))
     var[:, :] = YG
@@ -125,12 +111,6 @@ def write_grid_to_nc(config_dir, model_name,
     var = ds.createVariable('dyC', 'f4', ('Yp1', 'X'))
     var[:, :] = DYC
 
-    var = ds.createVariable('dxG', 'f4', ('Yp1', 'X'))
-    var[:, :] = DXG
-
-    var = ds.createVariable('dyG', 'f4', ('Y', 'Xp1'))
-    var[:, :] = DYG
-
     var = ds.createVariable('HFacC', 'f4', ('Z', 'Y', 'X'))
     var[:, :, :] = hFacC
 
@@ -146,9 +126,6 @@ def write_grid_to_nc(config_dir, model_name,
     var = ds.createVariable('Depth', 'f4', ('Y', 'X'))
     var[:, :] = Depth
 
-    var = ds.createVariable('rA', 'f4', ('Y', 'X'))
-    var[:, :] = rA
-
     ds.close()
 
 def stitch_grid_files(config_dir):
@@ -161,19 +138,20 @@ def stitch_grid_files(config_dir):
     sNx = 180
     sNy = 150
 
-    XC, YC, XG, YG, AngleCS, AngleSN, DXC, DYC, DXG, DYG, hFacC, hFacS, hFacW, Depth, rA, DRF \
-        = read_L2_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_tiles)
+    XC, YC, XG, YG, AngleCS, AngleSN, DXC, DYC, hFacC, hFacS, hFacW, Depth, DRF = \
+        read_L2_grid_tile_geometry(config_dir, model_name, Nr, sNx, sNy, ordered_tiles)
 
     print('   - Copying interior AngleCS and AngleSN values to boundary because these values are messed up')
-    AngleCS[-1, :] = AngleCS[-2, :]
+    AngleCS[-1,:] = AngleCS[-2,:]
     AngleCS[0, :] = AngleCS[1, :]
-    AngleCS[:, -1] = AngleCS[:, -2]
+    AngleCS[:,-1] = AngleCS[:,-2]
     AngleSN[-1, :] = AngleSN[-2, :]
     AngleSN[0, :] = AngleSN[1, :]
     AngleSN[:, -1] = AngleSN[:, -2]
 
     write_grid_to_nc(config_dir, model_name,
-                     XC, YC, XG, YG, AngleCS, AngleSN, DXC, DYC, DXG, DYG, hFacC, hFacS, hFacW, DRF, Depth, rA)
+                     XC, YC, XG, YG, AngleCS, AngleSN, DXC, DYC,
+                     hFacC, hFacS, hFacW, DRF, Depth)
 
     zero_rows = 0
     for i in range(np.shape(hFacC)[0]):

@@ -69,11 +69,11 @@ def read_field_from_monthly_ncs(config_dir, config_name, results_dir, field_name
         Omega = 7.2921e-5
         f_grid = 2 * Omega * np.sin(np.deg2rad(YC))
 
-    # numerator = np.diff(uvel * L1_DXC, axis=0)[:, :-1] + np.diff(vvel * L1_DYC, axis=1)[:-1, :]
-    # denominator = L1_RAZ[:-1, :-1]
+    # numerator = np.diff(uvel * L2_DXC, axis=0)[:, :-1] + np.diff(vvel * L2_DYC, axis=1)[:-1, :]
+    # denominator = L2_RAZ[:-1, :-1]
     # zeta = np.zeros_like(numerator)
     # zeta[denominator != 0] = numerator[denominator != 0] / denominator[denominator != 0]
-    # var_field = zeta / L1_f_grid[:-1, :-1]
+    # var_field = zeta / L2_f_grid[:-1, :-1]
 
     # year_months = ['199201']#,'199202','199203','199204','199205','199206',
     #                #'199207','199208','199209','199210','199211','199212']
@@ -92,14 +92,14 @@ def read_field_from_monthly_ncs(config_dir, config_name, results_dir, field_name
                     field = (uvel ** 2 + vvel ** 2) ** 0.5
                 elif field_name in ['Total_Chl']:
                     ds = nc4.Dataset(os.path.join(results_dir, file_prefix, file_name))
-                    chl1 = ds.variables['Chl01'][:, :, :]
+                    chL2 = ds.variables['Chl01'][:, :, :]
                     chl2 = ds.variables['Chl02'][:, :, :]
                     chl3 = ds.variables['Chl03'][:, :, :]
                     chl4 = ds.variables['Chl04'][:, :, :]
                     chl5 = ds.variables['Chl05'][:, :, :]
                     iter_numbers = ds.variables['iterations'][:]
                     ds.close()
-                    field = chl1+chl2+chl3+chl4+chl5
+                    field = chL2+chl2+chl3+chl4+chl5
                 elif field_name in ['Vorticity','Vorticity_AW']:
                     ds = nc4.Dataset(os.path.join(results_dir, file_prefix, file_name))
                     uvel = ds.variables['Uvel'][:, :, :]
@@ -152,13 +152,13 @@ def read_background_imagery(file_path):
     return(image,extents)
 
 def iter_number_to_date(iter_number):
-    seconds_per_iter = 300
+    seconds_per_iter = 60
     total_seconds = iter_number*seconds_per_iter
     date = datetime(1992,1,1) + timedelta(seconds=total_seconds)
     return(date)
 
 def date_to_iter_number(date):
-    seconds_per_iter = 300
+    seconds_per_iter = 60
     total_seconds = (date-datetime(1992,1,1)).total_seconds()
     iter_number = total_seconds/seconds_per_iter
     return(iter_number)
@@ -190,9 +190,9 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
     if field_name=='Total_Chl':
         vmin=0
         vmax=4.5
-    # if field_name=='EtaN':
-    #     vmin=-2.5
-    #     vmax=-1.5
+    if field_name=='EtaN':
+        vmin=-2.5
+        vmax=-1.5
 
     date = iter_number_to_date(iter_number)
     year = date.year
@@ -208,7 +208,7 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
     ############################################################################
     # make the plot
 
-    fig = plt.figure(figsize=(9, 12))
+    fig = plt.figure(figsize=(9, 10))
     plt.style.use('dark_background')
 
     gs2 = GridSpec(17, 14, left=0.05, right=0.95, top = 0.95, bottom = 0.05, hspace=0.05)
@@ -271,7 +271,7 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
 def compile_panels_to_movie(config_dir,config_name,field_name):
     pwd = os.getcwd()
 
-    panels_dir = os.path.join(config_dir,'L1',config_name,'plots','results','panels', field_name)
+    panels_dir = os.path.join(config_dir,'L2',config_name,'plots','results','panels', field_name)
 
     # get a list of the file names
     all_file_names = []
@@ -281,7 +281,7 @@ def compile_panels_to_movie(config_dir,config_name,field_name):
     all_file_names = sorted(all_file_names)
 
     # make a temporary dir where we will link all available images and go there
-    panels_dir_tmp = os.path.join(config_dir, 'L1', config_name, 'plots', 'results', 'panels_tmp')
+    panels_dir_tmp = os.path.join(config_dir, 'L2', config_name, 'plots', 'results', 'panels_tmp')
     os.mkdir(panels_dir_tmp)
     os.chdir(panels_dir_tmp)
 
@@ -303,19 +303,19 @@ def create_variable_movies(config_dir, config_name, field_names, metadata_dict, 
     # first need some sort of script to generate it as I did for the previous model
     add_background_imagery = False
 
-    results_dir = os.path.join(config_dir, 'L1', config_name, 'results')
+    results_dir = os.path.join(config_dir, 'L2', config_name, 'results')
 
     for field_name in field_names:
 
         field_grid, all_iter_numbers = read_field_from_monthly_ncs(config_dir, config_name, results_dir, field_name)
 
-        if 'results' not in os.listdir(os.path.join(config_dir,'L1',config_name,'plots',)):
-            os.mkdir(os.path.join(config_dir,'L1',config_name,'plots','results'))
+        if 'results' not in os.listdir(os.path.join(config_dir,'L2',config_name,'plots',)):
+            os.mkdir(os.path.join(config_dir,'L2',config_name,'plots','results'))
 
-        if 'panels' not in os.listdir(os.path.join(config_dir,'L1',config_name,'plots','results')):
-            os.mkdir(os.path.join(config_dir,'L1',config_name,'plots','results','panels'))
+        if 'panels' not in os.listdir(os.path.join(config_dir,'L2',config_name,'plots','results')):
+            os.mkdir(os.path.join(config_dir,'L2',config_name,'plots','results','panels'))
 
-        output_dir = os.path.join(config_dir,'L1',config_name,'plots','results','panels')
+        output_dir = os.path.join(config_dir,'L2',config_name,'plots','results','panels')
         if field_name not in os.listdir(output_dir):
             os.mkdir(os.path.join(output_dir,field_name))
         output_dir = os.path.join(output_dir,field_name)
@@ -364,7 +364,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-d", "--config_dir", action="store",
-                        help="The directory where the L1, L2, and L1 configurations are stored.", dest="config_dir",
+                        help="The directory where the L2, L2, and L2 configurations are stored.", dest="config_dir",
                         type=str, required=True)
 
     parser.add_argument("-r", "--remove_old", action="store",

@@ -8,42 +8,43 @@ import sys
 import ast
 
 
-def create_BCs(config_dir, L2_model_name, parent_model_level, parent_model_name, print_level):
+def create_BCs(config_dir, L1_model_name, L2_model_name, print_level):
 
     sys.path.insert(1, os.path.join(config_dir, 'L2', 'utils','init_file_creation'))
 
     start_year = 1992
-    start_month = 6
-    start_day = 1
+    start_month = 1
 
-    final_year = 1992
+    final_year = 1993
     final_month = 12
-    final_day = 31
 
-    # step 2: using the reference dict, organize downscaled BC into daily files
-    if parent_model_level=='L1':
+    ############################################################################################
+    # Create the BC fields (3 steps)
 
-        ############################################################################################
-        # Create the BC fields (3 steps)
+    # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
+    # import create_L2_BC_field_ref as ebcr
+    # ebcr.create_L2_BC_ref_file(config_dir, L1_model_name, L2_model_name, print_level)
 
-        # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
-        import create_L2_BC_field_ref as ebcr
-        ebcr.create_L2_BC_ref_file(config_dir, L2_model_name, parent_model_level, parent_model_name, print_level)
+    proc_ids = np.arange(120).tolist()  # (31+9)*3 = 120
+    boundaries = ['north', 'south', 'west']
 
-        # proc_ids = np.arange(27).tolist()
-        # # proc_ids = np.arange(12).tolist()
-        #
-        # import create_L2_daily_bcs_from_L1_ref_grid as cef
-        # for proc_id in proc_ids:  # 7
-        #     cef.create_bc_fields_via_interpolation(config_dir, L2_model_name, parent_model_name, proc_id,
-        #                                            start_year, final_year, start_month,
-        #                                            final_month, start_day, final_day, print_level)
-        #
-        # # step 3: combine all of the BC fields into a single file
-        # import combine_and_rotate_L2_daily_bc_files as com
-        # for proc_id in proc_ids:
-        #     com.combine_and_rotate_L2_daily_bcs(config_dir, L2_model_name, proc_id,
-        #                                         start_year, final_year, print_level)
+    # import create_L2_monthly_BCs as cef
+    # for proc_id in proc_ids:
+    #     cef.create_bc_fields_via_interpolation(config_dir, L1_model_name, L2_model_name, boundaries, proc_id,
+    #                                            start_year, final_year, start_month, final_month, print_level,
+    #                                            write_to_unbalanced=False)
+
+    # # step 3: combine all of the BC fields into a single file
+    # import combine_and_rotate_L2_monthly_bc_files as com
+    # var_names = ['THETA', 'SALT', 'UVEL', 'VVEL', 'UICE', 'VICE', 'HSNOW', 'HEFF', 'AREA']
+    # for i in range(1, 32):
+    #     var_names.append('PTRACE' + '{:02d}'.format(i))
+    # com.combine_and_rotate_L2_monthly_bcs(config_dir, L2_model_name, boundaries, var_names,
+    #                                       start_year, final_year, print_level,
+    #                                       read_from_unbalanced=False)
+
+    import balance_L2_vector_BCs as bbcs
+    bbcs.balance_bc_fields(config_dir, L2_model_name, boundaries, start_year, final_year, print_level)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

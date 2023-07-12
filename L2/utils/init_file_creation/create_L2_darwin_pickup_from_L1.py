@@ -223,10 +223,10 @@ def write_pickup_file(output_file,dtype,pickup_grid,subset_metadata, Nr):
 ########################################################################################################################
 
 
-def create_L2_ptracer_pickup_file(config_dir, L1_model_name, L1_iteration, L2_model_name, print_level):
+def create_L2_darwin_pickup_file(config_dir, L1_model_name, L1_iteration, L2_model_name, print_level):
 
     if print_level>=1:
-        print('    - Creating the ptracer pickup file for the ' + L2_model_name + ' model from the '+L1_model_name+' model')
+        print('    - Creating the darwin pickup file for the ' + L2_model_name + ' model from the '+L1_model_name+' model')
 
     sys.path.insert(1, os.path.join(config_dir, 'utils','init_file_creation'))
     import downscale_functions as df
@@ -246,19 +246,20 @@ def create_L2_ptracer_pickup_file(config_dir, L1_model_name, L1_iteration, L2_mo
     L1_wet_cells_on_L2_domain = interpolate_L1_wetgrid_to_L2_domain(L2_XC, L2_YC, delR_out,
                                                                     L1_XC, L1_YC, delR_in, L1_wet_cells)
 
-    pickup_file = 'pickup_ptracers.' + '{:010d}'.format(L1_iteration)
+    pickup_file = 'pickup_darwin.' + '{:010d}'.format(L1_iteration)
     pickup_file_path = os.path.join(config_dir, 'L1', L1_model_name, 'run', pickup_file)
     var_names, var_grids, pickup_metadata = read_pickup_grid(pickup_file_path, Nr_in)
     print(var_names)
 
     if print_level >= 1:
-        print('    - Downscaling the ptracer pickup grids')
+        print('    - Downscaling the darwin pickup grids')
     interp_grids = []
     for vn in range(len(var_names)):
         var_name = var_names[vn]
 
         if var_name not in []:  # used for testing
-            var_grid = var_grids[0][vn,:,:,:]
+            var_grid = var_grids[0]
+            print(np.shape(var_grid))
             if print_level >= 2:
                 print('        - Downscaling ' + var_name)
 
@@ -374,7 +375,7 @@ def create_L2_ptracer_pickup_file(config_dir, L1_model_name, L1_iteration, L2_mo
         print('    - Outputting the compact pickup grid to the input directory')
     # pickup_metadata = dict(global_metadata)
     output_dir = os.path.join(config_dir, 'L2', L2_model_name, 'input')
-    output_file = os.path.join(output_dir, 'pickup_ptracers.' + '{:010d}'.format(5 * L1_iteration))
+    output_file = os.path.join(output_dir, 'pickup_darwin.' + '{:010d}'.format(5 * L1_iteration))
     dtype = '>f8'
     pickup_metadata['timestepnumber'] = [5 * int(pickup_metadata['timestepnumber'][0])]
 

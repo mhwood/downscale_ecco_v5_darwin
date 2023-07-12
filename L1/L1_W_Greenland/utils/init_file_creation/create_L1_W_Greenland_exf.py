@@ -7,16 +7,16 @@ import sys
 import ast
 
 
-def create_exfs(config_dir, ecco_dir, print_level):
+def create_exf_files(config_dir, ecco_dir, print_level):
 
     L1_model_name = 'L1_W_Greenland'
 
     sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
 
-    start_year = 1994
+    start_year = 2000
     start_month = 1
 
-    final_year = 1994
+    final_year = 2019
     final_month = 12
 
     # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary
@@ -26,10 +26,10 @@ def create_exfs(config_dir, ecco_dir, print_level):
     proc_ids = np.arange(10).tolist()
     # proc_ids = [0, 1, -2]
 
-    import create_L1_monthly_exfs as cef
-    for proc_id in proc_ids:
-        cef.create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
-                                 start_year, final_year, start_month, final_month, print_level)
+    # import create_L1_monthly_exfs as cef
+    # for proc_id in proc_ids:
+    #     cef.create_L1_exf_fields(config_dir, ecco_dir, L1_model_name, proc_id,
+    #                              start_year, final_year, start_month, final_month, print_level)
 
     import combine_and_rotate_L1_monthly_exf_files as cre
     for proc_id in proc_ids:

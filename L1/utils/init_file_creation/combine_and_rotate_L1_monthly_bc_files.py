@@ -135,7 +135,7 @@ def stack_monthly_bc_files_to_one(config_dir, L1_model_name, mask_name, var_name
 
 def combine_and_rotate_L1_monthly_bcs(config_dir, L1_model_name, boundaries, var_names,
                                       start_year, final_year, print_level, velocity_only = False,
-                                      read_from_unbalanced = True):
+                                      read_from_unbalanced = True, write_to_balanced = False):
     
     # if L1_model_name in ['L1_W_Greenland', 'L1_mac_delta']:
     #     var_names = ['THETA', 'SALT', 'UVEL', 'VVEL', 'UICE', 'VICE', 'HSNOW', 'HEFF', 'AREA']
@@ -235,7 +235,7 @@ def combine_and_rotate_L1_monthly_bcs(config_dir, L1_model_name, boundaries, var
 
             for year in years:
 
-                if read_from_unbalanced:
+                if write_to_balanced:
                     if var_name=='UVEL' and mask_name=='east':
                         output_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'obcs', 'unbalanced',mask_name,var_name,
                                                    'L1_BC_'+mask_name+'_' + var_name + '_' + str(year)+'_unbalanced')

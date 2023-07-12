@@ -17,10 +17,8 @@ def create_L2_Disko_Bay_files(config_dir):
 
     print_level = 5
 
-    # steps = [3,4,8,9]
-    # steps = [6]
-    # steps = [7]
-    steps = [5]
+    # steps = [3,4,8]
+    steps = [6]
 
     # step 1: make the grid
     if 1 in steps:
@@ -76,11 +74,11 @@ def create_L2_Disko_Bay_files(config_dir):
     # step 7: make the iceplume files
     if 7 in steps:
         print('Step 7: Creating the iceplume files for the ' + L2_model_name + ' model')
-        runoff_dir = '/Users/mhwood/Documents/Research/Data Repository/Greenland/Runoff'
-        termpicks_file = '/Users/mhwood/Documents/Research/Data Repository/Greenland/Ice Fronts/TermPicks_V1'
+        mankoff_dir = '/Users/michwood/Documents/Research/Data Repository/Greenland/Runoff/Mankoff_liquid'
+        termpicks_file = '/Users/mike/Documents/Research/Data Repository/Greenland/Ice Fronts/TermPicks_V1'
         glacier_IDs = [276, 277, 278, 279, 280, 281, 282, 283]
         import create_L2_Disko_Bay_iceplume as cip
-        cip.create_L2_iceplume_files(config_dir, runoff_dir, termpicks_file, glacier_IDs, print_level)
+        cip.create_L2_iceplume_files(config_dir, mankoff_dir, termpicks_file, glacier_IDs, print_level)
 
     # step 8: make the seaice initial conditions
     if 8 in steps:

@@ -9,8 +9,8 @@ def create_exf_files(config_dir, L2_model_name, parent_model_level, parent_model
 
     sys.path.insert(1, os.path.join(config_dir,'L2','utils','init_file_creation'))
 
-    start_year = 1992
-    final_year = 1992
+    start_year = 1994
+    final_year = 1998
 
     ###################################################################################
     # The exf fields are created in 3 steps
@@ -22,8 +22,7 @@ def create_exf_files(config_dir, L2_model_name, parent_model_level, parent_model
 
         ############################################################################################
         # interpolate from annual L1 input files as a grid
-        proc_ids = np.arange(7)
-        proc_ids = [8,9]
+        proc_ids = np.arange(10)
 
         import create_L2_daily_exf_files_from_L1 as cef
         for proc_id in proc_ids:
