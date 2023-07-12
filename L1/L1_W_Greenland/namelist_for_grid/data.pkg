@@ -1,0 +1,8 @@
+# Packages
+ &PACKAGES
+ useCAL         = .TRUE.,
+ useEXF         = .FALSE.,
+ useOBCS        = .TRUE.,
+ useSALT_PLUME  = .TRUE.,
+ useMNC         = .TRUE.,
+ &

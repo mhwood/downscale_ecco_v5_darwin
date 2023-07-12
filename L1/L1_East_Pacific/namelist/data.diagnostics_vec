@@ -1,0 +1,123 @@
+
+ &DIAG_VEC_INPUT_VARS
+#
+ nml_startTime = 0,
+ nml_endTime = 3153600000.,
+#
+# lateral BC's are averaged hourly and dumped monthly
+#
+ nml_vecFiles(1)   = 'dv/L2_SB_north.bin',
+ nml_vecFiles(2)   = 'dv/L2_SB_north.bin',
+ nml_vecFiles(3)   = 'dv/L2_SB_north.bin',
+ nml_vecFiles(4)   = 'dv/L2_SB_north.bin',
+ nml_vecFiles(5)   = 'dv/L2_SB_north.bin',
+ nml_vecFiles(6)   = 'dv/L2_SB_east.bin',
+ nml_vecFiles(7)   = 'dv/L2_SB_east.bin',
+ nml_vecFiles(8)   = 'dv/L2_SB_east.bin',
+ nml_vecFiles(9)   = 'dv/L2_SB_east.bin',
+ nml_vecFiles(10)  = 'dv/L2_SB_east.bin',
+ nml_vecFiles(11)  = 'dv/L2_SB_south.bin',
+ nml_vecFiles(12)  = 'dv/L2_SB_south.bin',
+ nml_vecFiles(13)  = 'dv/L2_SB_south.bin',
+ nml_vecFiles(14)  = 'dv/L2_SB_south.bin',
+ nml_vecFiles(15)  = 'dv/L2_SB_south.bin',
+ nml_vecFiles(16)   = 'dv/L2_SB_west.bin',
+ nml_vecFiles(17)   = 'dv/L2_SB_west.bin',
+ nml_vecFiles(18)   = 'dv/L2_SB_west.bin',
+ nml_vecFiles(19)   = 'dv/L2_SB_west.bin',
+ nml_vecFiles(20)  = 'dv/L2_SB_west.bin',
+#
+# lateral bc's have 720 iterations per file (24*30, 1 month)
+#
+ nml_vec_iters_per_file(1:20) = 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180,
+# nml_vec_iters_per_file(1:20) = 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 
+#
+# lateral bc's have an averaging period of 1 day (24*60*60)
+#
+ nml_vec_avg_periods(1:20) = 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400., 86400.,
+# nml_vec_avg_periods(1:20) = 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 3600.0, 
+#
+ nml_fields2D(1,1) = 'ETAN    ',
+ nml_fields2D(1:2,2) = 'UICE    ','VICE    ',
+ nml_fields2D(1,3) = 'AREA    ',
+ nml_fields2D(1,4) = 'HSNOW   ',
+ nml_fields2D(1,5) = 'HEFF   ',
+#
+ nml_fields2D(1,6) = 'ETAN    ',
+ nml_fields2D(1:2,7) = 'UICE    ','VICE    ',
+ nml_fields2D(1,8) = 'AREA    ',
+ nml_fields2D(1,9) = 'HSNOW   ',
+ nml_fields2D(1,10) = 'HEFF   ',
+#
+ nml_fields2D(1,11) = 'ETAN    ',
+ nml_fields2D(1:2,12) = 'UICE    ','VICE    ',
+ nml_fields2D(1,13) = 'AREA    ',
+ nml_fields2D(1,14) = 'HSNOW   ',
+ nml_fields2D(1,15) = 'HEFF   ',
+#
+ nml_fields2D(1,16) = 'ETAN    ',
+ nml_fields2D(1:2,17) = 'UICE    ','VICE    ',
+ nml_fields2D(1,18) = 'AREA    ',
+ nml_fields2D(1,19) = 'HSNOW   ',
+ nml_fields2D(1,20) = 'HEFF   ',
+#
+ nml_fields3D(1:8,1)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,1)  =   50, 50, 50, 50, 50, 50, 50, 50, 
+ nml_fields3D(1:8,2)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,2)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:8,3)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,3)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:7,4)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,4)  =   50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:4,5) = 'THETA   ','SALT   ','VVEL   ','UVEL    ',
+ nml_levels3D(1:4,5) =   50, 50, 50, 50,
+#
+ nml_fields3D(1:8,6)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,6)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:8,7)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,7)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:8,8)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,8)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:7,9)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,9)  =   50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:4,10) = 'THETA   ','SALT   ','VVEL   ','UVEL    ',
+ nml_levels3D(1:4,10) =   50, 50, 50, 50,
+#
+ nml_fields3D(1:8,11)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,11)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:8,12)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,12)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:8,13)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,13)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:7,14)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,14)  =   50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:4,15) = 'THETA   ','SALT   ','VVEL   ','UVEL    ',
+ nml_levels3D(1:4,15) =   50, 50, 50, 50,
+#
+ nml_fields3D(1:8,16)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,16)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:8,17)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,17)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:8,18)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,18)  =   50, 50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:7,19)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,19)  =   50, 50, 50, 50, 50, 50, 50,
+ nml_fields3D(1:4,20) = 'THETA   ','SALT   ','VVEL   ','UVEL    ',
+ nml_levels3D(1:4,20) =   50, 50, 50, 50,
+#
+# surface bc's are averaged every 6 hour and dumped every month
+#
+# nml_sfFiles(1) = 'dv/L2_SB_surface_mask.bin',
+#
+# surface bc's have 120 iterations per file (30*4, 6-hourly)
+#
+# nml_sf_iters_per_file(1) = 120,
+#
+# surface bc's have an averaging period of 6 hour (6*60*60)
+#
+# nml_sf_avg_periods(1) = 21600.,
+#
+# nml_fieldsSF(1:10,1) = 'ATMOSCO2','IRONDUST','UWIND   ','VWIND  ','PRECIP ','SWDOWN  ','LWDOWN  ','ATEMP   ','AQH     ','RUNOFF ',
+#
+ nml_filePrec = 32,
+ &
