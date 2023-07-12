@@ -2,29 +2,23 @@
 
 This configuration is constructed to simulate ocean circulation and biogeochemistry in Davis Strait and Baffin Bay, West of Greenland.
 
-The following steps will set up the L1_1080 configuration to build and run.
+The following steps will set up the grid, bathymetry, initial conditions, boundary conditions, and external forcing conditions for the model run. Note that the [create_all_L1_W_Greenland_files.py](https://github.com/mhwood/downscale_ecco_v5_darwin/blob/main/L1/L1_W_Greenland/utils/init_file_creation/create_all_L1_W_Greenland_files.py) script provides a pipeline to run all of the pertinent scripts for the files for this model.
 
 ## Step 0: Prerequisite
 Before the L1 configuration can be prepared, the L0 configuration must be run to output boundary and external forcing conditions. This example assumes the [diagnostics_vec](https://github.com/mhwood/diagnostics_vec) package has been used to generate daily boundary conditions.
 
-## Step 1: Creating the model grid
-To generate the initial, boundary, and external conditions for the L1 model run, the 
-
-2. The mitgrid file for this configuration has been created using the [utils/create_all_mitgrids.py](https://github.com/mhwood/downscaled_east_pacific/blob/main/utils/create_all_mitgrids.py) script
-3. The bathymetry file for this configuration has been created using the [utils/create_all_bathymetry_grids.py](https://github.com/mhwood/downscaled_east_pacific/blob/main/utils/create_all_bathymetry_grids.py) script
-4. The L0 grids have been created by running the model for one timestep and using the L0_540/utils/stitch_grid_tiles_to_single_nc.py script (Instructions provided in LINK].
-
-### Step 1: Estimate the L0_540 wetgrids in the L1 domain
-Make a note here about running the nc script. Also add 1 sentence to explain.
-
-### Step 2: Create the time-invariant fields
-For this configuration, there is only one time invariant field: the diffusivity field ```diff_kr```.  This field is subsetted and interpolated from the LLC540 file:
+## Step 1: Creating the mitgrid file
+This configuration uses an mitgrid file to generate the model grid. To generate this file, use the following script:
+file:
 ```
-python3 init_file_creation/create_diff_kr_file.py -d /path/to/config/dir -e /path/to/ECCO/dir
+python3 init_file_creation/create_L1_W_Greenland_mitgrid.py -d /path/to/config/dir -e /path/to/ECCO/dir
 ```
-If desired, a plot showing the diff_kr field can be made as follows:
+
+## Step 2: Creating the bathymetry
+This configuration uses bathymetry from the LLC1080 grid bathymeetry. To generate this file, use the following script:
+file:
 ```
-python3 plot_creation/plot_diff_kr_field.py -d /path/to/config/dir
+python3 init_file_creation/create_L1_W_Greenland_bathymetry.py -d /path/to/config/dir -e /path/to/ECCO/dir
 ```
 
 ### Step 3: Create the initial conditions
@@ -112,7 +106,3 @@ In order to configuration the subsequent model level (L2), the boundary conditio
 ```
 python3 init_file_creation/generate_diagnostics_vec_masks.py
 ```
-
-### Step 7: Create the mitgrid tile files
-The final step to configure the model is to divide the mitgcm grid file for this domain (`mitgrids/L1_1080.mitgrid`) into individual mitgrid tiles for each of the processors being used. Here we provide two examples (note that the domain size is 360 rows by 480 columns):
-
