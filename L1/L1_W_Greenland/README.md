@@ -22,7 +22,21 @@ python3 init_file_creation/create_L1_W_Greenland_bathymetry.py -d /path/to/confi
 ```
 
 ## Step 2.5 Intermediate Step: Make an nc file for the model grid
-The initial condtions, boundary conditions, and external forcing conditions all must be interpolated from the "parent" model to the new downscaled model. To easily generate the grid as a complete netcdf file, my strategy is to set up the model and run for one time step, outputting the grid using the mnc package. For this model run, 
+The initial condtions, boundary conditions, and external forcing conditions all must be interpolated from the "parent" model to the new downscaled model. To easily generate the grid as a complete netcdf file, my strategy is to set up the model and run for one time step, outputting the grid using the mnc package. For this model run, I use a paired-down version of the model using the [code_for_grid](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L1/L1_W_Greenland/code_for_grid) and [namelist_for_grid](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L1/L1_W_Greenland/namelist_for_grid) along with the input/L1_W_Greenland.mitgrid and input/L1_W_Greenland_bathymetry.bin files generated in the previous 2 steps. 
+
+To run this g model for one time step on 12 cpus (for example), split the mitgrid file into 180 by 180 tiles using:
+```
+python3 init_file_creation/split_L1_W_Greenland_mitgrid_file_to_tiles.py -d /path/to/config/dir -f 1 -r 180 -c 180
+```
+Then, build and run the model with the [build_for_grid](https://github.com/mhwood/downscale_ecco_v5_darwin/blob/main/L1/L1_W_Greenland/utils/build_for_grid.sh) and [run_for_grid](https://github.com/mhwood/downscale_ecco_v5_darwin/blob/main/L1/L1_W_Greenland/utils/run_for_grid.sh) scripts.
+
+
+This model run will output pieces of the grid as nc files in the mnc* directories. To stitch these grids together into a netcdf file that spans the whole domain, use
+```
+python3 init_file_creation/stitch_L1_W_Greenland_nc_grid_files_for_ref.py -d /path/to/config/dir
+```
+This nc file will output in a general `nc_files` directory in the main configuration directory.
+
 
 ### Step 3: Create the initial conditions
 The initial conditions for the subdomain are stored in a pickup file for convenience. To generate this pickup file, an equivalent pickup file from the L0_540 run is interpolated into the new grid. For our investigation, we used a pickup file 1 year (175,680 time steps) into the L0_540 simulation, located in the L0_540/run directory: pickup.0000175680.data. Note also that the code will use the tile004.mitgrid and tile005.mitgrid files, which are expected to be located in the L0_540/run directory. To generate the new pickup file, run the following code:
