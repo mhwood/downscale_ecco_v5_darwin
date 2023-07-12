@@ -4,6 +4,12 @@ This configuration is constructed to simulate ocean circulation and biogeochemis
 
 The following steps will set up the grid, bathymetry, initial conditions, boundary conditions, and external forcing conditions for the model run. Note that the [create_all_L1_W_Greenland_files.py](https://github.com/mhwood/downscale_ecco_v5_darwin/blob/main/L1/L1_W_Greenland/utils/init_file_creation/create_all_L1_W_Greenland_files.py) script provides a pipeline to run all of the pertinent scripts for the files for this model.
 
+The scripts below will require two main file paths:
+| Flag          | Expected Path                                                         |
+|---------------|-----------------------------------------------------------------------|
+| -e ecco_dir   | path to files from the LLC270 and LLC1080 models                      |
+| -d config_dir | path to this repository (where the L0 and L1 directories are located) |
+
 ## Step 0: Prerequisite
 Before the L1 configuration can be prepared, the L0 configuration must be run to output boundary and external forcing conditions. This example assumes the [diagnostics_vec](https://github.com/mhwood/diagnostics_vec) package has been used to generate daily boundary conditions.
 
@@ -24,7 +30,7 @@ python3 init_file_creation/create_L1_W_Greenland_bathymetry.py -d /path/to/confi
 ## Step 2.5 Intermediate Step: Make an nc file for the model grid
 The initial condtions, boundary conditions, and external forcing conditions all must be interpolated from the "parent" model to the new downscaled model. To easily generate the grid as a complete netcdf file, my strategy is to set up the model and run for one time step, outputting the grid using the mnc package. For this model run, I use a paired-down version of the model using the [code_for_grid](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L1/L1_W_Greenland/code_for_grid) and [namelist_for_grid](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L1/L1_W_Greenland/namelist_for_grid) along with the input/L1_W_Greenland.mitgrid and input/L1_W_Greenland_bathymetry.bin files generated in the previous 2 steps. 
 
-To run this g model for one time step on 12 cpus (for example), split the mitgrid file into 180 by 180 tiles using:
+To run this model for one time step on 12 cpus (for example), split the mitgrid file into 180 by 180 tiles using:
 ```
 python3 init_file_creation/split_L1_W_Greenland_mitgrid_file_to_tiles.py -d /path/to/config/dir -f 1 -r 180 -c 180
 ```
@@ -39,13 +45,13 @@ This nc file will output in a general `nc_files` directory in the main configura
 
 
 ### Step 3: Create the initial conditions
-The initial conditions for the subdomain are stored in a pickup file for convenience. To generate this pickup file, an equivalent pickup file from the L0_540 run is interpolated into the new grid. For our investigation, we used a pickup file 1 year (175,680 time steps) into the L0_540 simulation, located in the L0_540/run directory: pickup.0000175680.data. Note also that the code will use the tile004.mitgrid and tile005.mitgrid files, which are expected to be located in the L0_540/run directory. To generate the new pickup file, run the following code:
+The initial conditions for the subdomain are stored in a pickup file for convenience. To generate this pickup file, an equivalent pickup file from the ECCO_Darwin run is interpolated into the new grid. For our investigation, we used a pickup file a little more than 24 hours (73 time steps) into the ECCO_Darwin simulation, located in the L0/run directory: pickup.0000000073.data. To generate the new pickup file, run the following code:
 ```
-python3 init_file_creation/create_pickup_file.py -d /path/to/config/dir -i 175680
+python3 init_file_creation/create_pickup_file.py -d /path/to/config/dir -e /path/to/ECCO/dir
 ```
-This script will generate the files ```pickup.0000351360.data``` and ```pickup.0000351360.meta```. Note that the iteration counter has been doubled because the time step of the L1 model is half that of the L0 model. If desired, a plot showing all of the initial condition fields can be made as follows:
+This script will generate the files ```pickup.0000000292.data``` and ```pickup.0000000292.meta```. Note that the iteration counter has been quadrupled because the time step of the L1 model is 4 times that of the L0 model. If desired, a plot showing all of the initial condition fields (at the surface_ can be made as follows:
 ```
-python3 plot_creation/plot_pickup_file_components.py -d /path/to/config/dir -i 351360
+python3 plot_creation/init_files/plot_L1_W_Greenland_pickup_fields.py -d /path/to/config/dir
 ```
 
 ### Step 4: Create the external forcing fields
