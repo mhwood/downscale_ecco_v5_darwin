@@ -113,7 +113,7 @@ def output_mask_dictionary_to_nc(output_dir,output_file_name,all_mask_dicts,mask
 def create_dv_masks(config_dir):
 
     L1_model_name = 'L1_East_Pacific'
-    L2_model_name = 'L2_Santa_Barbara'
+    L2_model_name = 'L2_Monterey_Bay'
     print_level = 4
 
     # if 'input' not in os.listdir('..'):
@@ -150,7 +150,10 @@ def create_dv_masks(config_dir):
 
     ctd_points = np.array([])
 
-    for boundary in ['L2_SB_north','L2_SB_south','L2_SB_west','L2_SB_east']:
+    boundaries = ['L2_SB_north','L2_SB_south','L2_SB_west','L2_SB_east']
+    boundaries = ['L2_MB_south','L2_MB_west']
+
+    for boundary in boundaries:
         if print_level >= 1:
             print('    - Creating the ' + boundary +' mask')
 
@@ -174,11 +177,11 @@ def create_dv_masks(config_dir):
         #     XC_boundary = L2_XC.ravel()
         #     YC_boundary = L2_YC.ravel()
 
-        if boundary == 'L2_SB_south':
+        if boundary in ['L2_SB_south']:
             XC_boundary = L2_XC[0,:]
             YC_boundary = L2_YC[0,:]
 
-        if boundary == 'L2_SB_north':
+        if boundary == 'L2_SB_north' or boundary=='L2_MB_south':
             XC_boundary = L2_XC[-1,:]
             YC_boundary = L2_YC[-1,:]
 
@@ -186,7 +189,7 @@ def create_dv_masks(config_dir):
             XC_boundary = L2_XC[:,-1]
             YC_boundary = L2_YC[:,-1]
 
-        if boundary == 'L2_SB_west':
+        if boundary in ['L2_SB_west', 'L2_MB_west']:
             XC_boundary = L2_XC[:,0]
             YC_boundary = L2_YC[:,0]
 

@@ -14,10 +14,10 @@ def create_exfs(config_dir, ecco_dir, print_level):
 
     sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
 
-    start_year = 1992
+    start_year = 1994
     start_month = 1
 
-    final_year = 1993
+    final_year = 1995
     final_month = 12
 
     # # # step 1: make a reference whereby the diagnostics_vec files are organized in a dictionary

@@ -7,13 +7,14 @@ import os
 
 def copy_files(config_dir, github_dir):
 
-    level_names = ['L1','L0']
+    level_names = ['L2','L1','L0']
 
     for level_name in level_names:
         if level_name not in os.listdir(github_dir):
             os.mkdir(os.path.join(github_dir,level_name))
 
-    level_name_model_dict = {'L1':['L1_East_Pacific','L1_GOM','L1_W_Greenland','L1_mac_delta'],
+    level_name_model_dict = {'L2':['L2_Disko_Bay', 'L2_Santa_Barbara', 'L2_Monterey_Bay'],
+                             'L1':['L1_East_Pacific','L1_GOM','L1_W_Greenland','L1_mac_delta'],
                              'L0':[]}
     subdirs = []
     utils_subdirs = ['init_file_creation','plot_creation']

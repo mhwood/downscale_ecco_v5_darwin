@@ -20,9 +20,6 @@ def create_mitgrid(config_dir, print_level):
     if print_level >= 1:
         print('Creating the mitgrid file for the '+model_name+' model')
 
-    if print_level >= 1:
-        print('    - Generating the grid in polar coordinates')
-
     ds = nc4.Dataset(os.path.join(config_dir,'L2',model_name,'input',model_name+'_bathymetry_GEBCO.nc'))
     x = ds.variables['lon'][:]
     y = ds.variables['lat'][:]
@@ -38,8 +35,14 @@ def create_mitgrid(config_dir, print_level):
     XG = np.hstack([XG,XG[:,-1:]+x_resolution])
     XG = np.vstack([XG,XG[-1:,:]])
 
+    XC = np.flipud(XC)
+    YC = np.flipud(YC)
+
     YG = np.hstack([YG, YG[:, -1:]])
     YG = np.vstack([YG, YG[-1:, :]+ y_resolution])
+
+    XG = np.flipud(XG)
+    YG = np.flipud(YG)
 
     if print_level >= 1:
         print('    - The C grid has '+str(np.shape(XC)[0])+' rows and '+str(np.shape(XC)[1])+' cols')

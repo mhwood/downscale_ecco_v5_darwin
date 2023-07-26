@@ -67,8 +67,22 @@ def read_grid_geometry_from_nc(config_dir,model_name,var_name):
     return(XC,YC,AngleCS,AngleSN,mask,delR)
 
 def read_mask_reference_from_nc_dict(nc_dict_file,model_name,mask_name):
+
+    if model_name=='L2_Santa_Barbara':
+        if mask_name=='north':
+            read_boundary='south'
+        elif mask_name=='south':
+            read_boundary='north'
+        else:
+            read_boundary = mask_name
+    else:
+        read_boundary = mask_name
+
     ds = nc4.Dataset(nc_dict_file)
-    grp = ds.groups['L3_'+mask_name]
+    if model_name == 'L2_Disko_Bay':
+        grp = ds.groups['L3_'+read_boundary]
+    if model_name == 'L2_Santa_Barbara':
+        grp = ds.groups['L2_SB_' + read_boundary]
     source_rows = grp.variables['source_rows'][:]
     source_cols = grp.variables['source_cols'][:]
     ds.close()
@@ -111,19 +125,35 @@ def read_L1_boundary_variable_points(L1_run_dir, L2_model_name, boundary, var_na
 
         N = len(rows)
 
-        if var_name in ['UVEL','VVEL']:
-            u_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' + 'UVEL.' + file_suffix)
-            u_var_grid = np.fromfile(u_var_file, dtype='>f4')
-            v_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' +'VVEL.' + file_suffix)
-            v_var_grid = np.fromfile(v_var_file, dtype='>f4')
-        elif var_name in ['UICE','VICE']:
-            u_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' +'UICE.' + file_suffix)
-            u_var_grid = np.fromfile(u_var_file, dtype='>f4')
-            v_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' +'VICE.' + file_suffix)
-            v_var_grid = np.fromfile(v_var_file, dtype='>f4')
-        else:
-            var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_'+ boundary + '_BC_mask_' +var_name +'.' + file_suffix)
-            var_grid = np.fromfile(var_file, dtype='>f4')
+
+        if L2_model_name in ['L2_Disko_Bay']:
+            if var_name in ['UVEL','VVEL']:
+                u_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' + 'UVEL.' + file_suffix)
+                u_var_grid = np.fromfile(u_var_file, dtype='>f4')
+                v_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' +'VVEL.' + file_suffix)
+                v_var_grid = np.fromfile(v_var_file, dtype='>f4')
+            elif var_name in ['UICE','VICE']:
+                u_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' +'UICE.' + file_suffix)
+                u_var_grid = np.fromfile(u_var_file, dtype='>f4')
+                v_var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_' + boundary + '_BC_mask_' +'VICE.' + file_suffix)
+                v_var_grid = np.fromfile(v_var_file, dtype='>f4')
+            else:
+                var_file = os.path.join(L1_run_dir, 'dv', L2_model_name,'L2_'+boundary, 'L2_'+ boundary + '_BC_mask_' +var_name +'.' + file_suffix)
+                var_grid = np.fromfile(var_file, dtype='>f4')
+        if L2_model_name == 'L2_Santa_Barbara':
+            if var_name in ['UVEL','VVEL']:
+                u_var_file = os.path.join(L1_run_dir, 'dv','L2_SB_'+boundary, 'L2_SB_' + boundary + '_UVEL.' + file_suffix)
+                u_var_grid = np.fromfile(u_var_file, dtype='>f4')
+                v_var_file = os.path.join(L1_run_dir, 'dv', 'L2_SB_'+boundary, 'L2_SB_' + boundary + '_VVEL.' + file_suffix)
+                v_var_grid = np.fromfile(v_var_file, dtype='>f4')
+            elif var_name in ['UICE','VICE']:
+                u_var_file = os.path.join(L1_run_dir, 'dv', 'L2_SB_'+boundary, 'L2_SB_' + boundary + '_UICE.' + file_suffix)
+                u_var_grid = np.fromfile(u_var_file, dtype='>f4')
+                v_var_file = os.path.join(L1_run_dir, 'dv', 'L2_SB_'+boundary, 'L2_SB_' + boundary + '_VICE.' + file_suffix)
+                v_var_grid = np.fromfile(v_var_file, dtype='>f4')
+            else:
+                var_file = os.path.join(L1_run_dir, 'dv', 'L2_SB_'+boundary, 'L2_SB_'+ boundary + '_' +var_name +'.' + file_suffix)
+                var_grid = np.fromfile(var_file, dtype='>f4')
 
         if var_name in ['ETAN','AREA','HEFF','HSNOW','UICE','VICE']:
             if var_name in ['UICE','VICE']:
@@ -342,7 +372,10 @@ def create_bc_field(config_dir, L1_model_name, L2_model_name, mask_name,
         L2_wet_grid_3D_subset = L2_wet_grid_3D_subset[:1,:,:]
 
     print('    - Reading the mask to reference the variable to the llc grid')
-    nc_dict_file = os.path.join(config_dir,'L1',L1_model_name, 'input','L1_dv_mask_reference_dict.nc')
+    if L2_model_name=='L2_Santa_Barbara':
+        nc_dict_file = os.path.join(config_dir,'L1',L1_model_name, 'input','L1_dv_mask_reference_dict_SB.nc')
+    else:
+        nc_dict_file = os.path.join(config_dir, 'L1', L1_model_name, 'input', 'L1_dv_mask_reference_dict.nc')
     source_rows, source_cols = read_mask_reference_from_nc_dict(nc_dict_file, L2_model_name, mask_name)
 
     for dest_file in dest_files:

@@ -14,10 +14,10 @@ def create_BCs(config_dir, ecco_dir, print_level):
 
     sys.path.insert(1, os.path.join(config_dir, 'L1', 'utils','init_file_creation'))
 
-    start_year = 1992
+    start_year = 2000
     start_month = 1
 
-    final_year = 1993
+    final_year = 2005
     final_month = 12
 
     proc_ids = np.arange(105).tolist()  # (31+4)*3 = 105

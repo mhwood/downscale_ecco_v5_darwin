@@ -78,9 +78,11 @@ def read_field_from_monthly_ncs(config_dir, config_name, results_dir, field_name
     # year_months = ['199201']#,'199202','199203','199204','199205','199206',
     #                #'199207','199208','199209','199210','199211','199212']
 
+    count = 0
     for year_month in year_months:
         for file_name in os.listdir(os.path.join(results_dir,file_prefix)):
-            if file_name.split('.')[1]==year_month:
+            if file_name.split('.')[1]==year_month:# and count==0:
+                count+=1
                 print('    - Reading from '+file_name)
 
                 if field_name in ['Speed']:
@@ -189,7 +191,7 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
         #print('  vmin: '+str(vmin)+', vmax: '+str(vmax))
     if field_name=='Total_Chl':
         vmin=0
-        vmax=4.5
+        vmax=10
     # if field_name=='EtaN':
     #     vmin=-2.5
     #     vmax=-1.5
@@ -213,7 +215,7 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
 
     gs2 = GridSpec(17, 14, left=0.05, right=0.95, top = 0.95, bottom = 0.05, hspace=0.05)
 
-    ax1 = fig.add_subplot(gs2[:-2, :-1])
+    ax1 = fig.add_subplot(gs2[:-4, :-1])
 
     if add_background_imagery:
         ax1.imshow(background_image, extent=extents, alpha=0.7)
@@ -251,6 +253,8 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
     ax2.add_patch(rect)
     ax2.set_xlim([min_year, max_year])
     ax2.set_ylim([0, 1])
+    for i in range(min_year,max_year,5):
+        plt.plot([i,i],[0,1],'w-',linewidth=0.5)
     ax2.set_xticks(np.arange(min_year,max_year,5))
     ax2.set_yticks([])
 
@@ -260,7 +264,9 @@ def create_panel_plot(output_dir, file_name, metadata_dict, field_name, field_gr
     ax3.add_patch(rect)
     ax3.set_xlim([date.year, date.year + 1])
     ax3.set_ylim([0, 1])
-    ax3.set_xticks(np.arange(date.year, date.year + 1, 1 / 12))
+    for i in range(1,12):
+        plt.plot([date.year+i/12,date.year+i/12],[0,1],'w-',linewidth=0.5)
+    ax3.set_xticks(np.arange(date.year+1/24, date.year + 1, 1 / 12))
     ax3.set_xticklabels(['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'])
     ax3.set_yticks([])
 

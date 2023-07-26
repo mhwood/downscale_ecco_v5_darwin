@@ -9,8 +9,8 @@ def create_exf_files(config_dir, L2_model_name, parent_model_level, parent_model
 
     sys.path.insert(1, os.path.join(config_dir,'L2','utils','init_file_creation'))
 
-    start_year = 2011
-    final_year = 2015
+    start_year = 1993
+    final_year = 1993
 
     ###################################################################################
     # The exf fields are created in 3 steps

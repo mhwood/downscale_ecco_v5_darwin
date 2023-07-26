@@ -19,7 +19,7 @@ def find_dv_files_to_read(config_dir, L1_model_name, L2_model_name, boundary, va
     file_names = []
     file_iters = []
     n_files_in_files = []
-    dv_dir = os.path.join(config_dir, 'L1', L1_model_name, 'run', 'dv', L2_model_name, 'L2_'+boundary)
+    dv_dir = os.path.join(config_dir, 'L1', L1_model_name, 'run', 'dv', 'L2_SB_'+boundary)
     for file_name in os.listdir(dv_dir):
         if 'L2' in file_name and var_name in file_name and boundary in file_name:
             file_iter = int(file_name.split('.')[-2])
@@ -192,9 +192,16 @@ def create_L2_BC_ref_file(config_dir, L1_model_name, L2_model_name, print_level)
     Nr = 50
 
     # first read how many points are expected in each iter (read from the mask reference)
-    mask_ref_file = os.path.join(config_dir,'L1',L1_model_name, 'input', 'L1_dv_mask_reference_dict.nc')
+    mask_ref_file = os.path.join(config_dir,'L1',L1_model_name, 'input', 'L1_dv_mask_reference_dict_SB.nc')
+    if L2_model_name=='L2_Santa_Barbara':
+        if boundary=='north':
+            read_boundary='south'
+        if boundary=='south':
+            read_boundary='north'
+    else:
+        read_boundary = boundary
     ds = nc4.Dataset(mask_ref_file)
-    points_per_output = len(ds.groups['L3_'+boundary].variables['source_rows'][:])
+    points_per_output = len(ds.groups['L2_SB_'+read_boundary].variables['source_rows'][:])
     ds.close()
 
     # calculate the file name iterations to read from

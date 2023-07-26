@@ -17,8 +17,8 @@ def create_L2_Santa_Barbara_files(config_dir):
 
     print_level = 5
 
-    # steps = [3,4,8]
-    steps = [1]
+    steps = [3, 4, 5, 6]
+    steps = [7]
 
     # step 1: make the grid
     if 1 in steps:
@@ -50,55 +50,45 @@ def create_L2_Santa_Barbara_files(config_dir):
         cp.create_pickup_file(config_dir, L2_model_name,
                               parent_model_level, parent_model_name, parent_model_pickup_iteration, print_level)
 
-    # step 4: make the seaice initial conditions
+    # step 4: make the ptracer initial conditions
     if 4 in steps:
-        print('Step 4: Creating the seaice pickup (initial conditions) file for the ' + L2_model_name + ' model')
-        import create_L2_Santa_Barbara_seaice_pickup as cp
-        cp.create_seaice_pickup_file(config_dir, L2_model_name,
-                                     parent_model_level, parent_model_name, parent_model_pickup_iteration, print_level)
-
-    # step 5: make the external forcing conditions
-    if 5 in steps:
-        print('Step 5: Creating the external forcing conditions for the ' + L2_model_name + ' model')
-        import create_L2_Santa_Barbara_exf as ce
-        ce.create_exf_files(config_dir, L2_model_name, parent_model_level, parent_model_name, print_level)
-
-    # step 6: make the boundary conditions
-    if 6 in steps:
-        print('Step 6: Creating the boundary conditions for the ' + L2_model_name + ' model')
-        import create_L2_Santa_Barbara_BCs as cbc
-        cbc.create_BCs(config_dir, parent_model_name, L2_model_name, print_level)
-
-    # step 7: make the iceplume files
-    if 7 in steps:
-        print('Step 7: Creating the iceplume files for the ' + L2_model_name + ' model')
-        mankoff_dir = '/Users/michwood/Documents/Research/Data Repository/Greenland/Runoff/Mankoff_liquid'
-        termpicks_file = '/Users/mike/Documents/Research/Data Repository/Greenland/Ice Fronts/TermPicks_V1'
-        glacier_IDs = [276, 277, 278, 279, 280, 281, 282, 283]
-        import create_L2_Santa_Barbara_iceplume as cip
-        cip.create_L2_iceplume_files(config_dir, mankoff_dir, termpicks_file, glacier_IDs, print_level)
-
-    # step 8: make the seaice initial conditions
-    if 8 in steps:
-        print('Step 8: Creating the ptracer pickup (initial conditions) file for the ' + L2_model_name + ' model')
+        print('Step 4: Creating the ptracer pickup (initial conditions) file for the ' + L2_model_name + ' model')
         import create_L2_Santa_Barbara_ptracer_pickup as cp
         cp.create_ptracer_pickup_file(config_dir, L2_model_name,
-                                     parent_model_level, parent_model_name, parent_model_pickup_iteration,
-                                     print_level)
-
-    # step 9: make the darwin initial conditions
-    if 9 in steps:
-        print('Step 9: Creating the darwin pickup (initial conditions) file for the ' + L2_model_name + ' model')
-        import create_L2_Santa_Barbara_darwin_pickup as cp
-        cp.create_darwin_pickup_file(config_dir, L2_model_name,
                                       parent_model_level, parent_model_name, parent_model_pickup_iteration,
                                       print_level)
 
-    # step 10: make the dv masks
-    if 10 in steps:
-        print('Step 10: Creating the diagnostic_vec masks for the ' + L2_model_name + ' model')
+    # step 5: make the darwin initial conditions
+    if 5 in steps:
+        print('Step 5: Creating the darwin pickup (initial conditions) file for the ' + L2_model_name + ' model')
+        import create_L2_Santa_Barbara_darwin_pickup as cp
+        cp.create_darwin_pickup_file(config_dir, L2_model_name,
+                                     parent_model_level, parent_model_name, parent_model_pickup_iteration,
+                                     print_level)
+
+    # step 6: make the external forcing conditions
+    if 6 in steps:
+        print('Step 6: Creating the external forcing conditions for the ' + L2_model_name + ' model')
+        import create_L2_Santa_Barbara_exf as ce
+        ce.create_exf_files(config_dir, L2_model_name, parent_model_level, parent_model_name, print_level)
+
+    # step 7: make the boundary conditions
+    if 7 in steps:
+        print('Step 7: Creating the boundary conditions for the ' + L2_model_name + ' model')
+        import create_L2_Santa_Barbara_BCs as cbc
+        cbc.create_BCs(config_dir, parent_model_name, L2_model_name, print_level)
+
+    # step 8: make the dv masks
+    if 8 in steps:
+        print('Step 8: Creating the diagnostic_vec masks for the ' + L2_model_name + ' model')
         import create_L2_Santa_Barbara_dv_masks as cdv
         cdv.create_dv_masks(config_dir, L2_model_name, print_level)
+
+    # step 9: make the dv masks
+    if 9 in steps:
+        print('Step 9: Creating the exch2 file and blank list for the ' + L2_model_name + ' model')
+        import create_L2_Santa_Barbara_exch2_config as cex
+        cex.create_exch2_file(config_dir, print_level)
 
 
 
