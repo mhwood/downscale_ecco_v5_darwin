@@ -59,8 +59,7 @@ Add this block:
 Add this block:
 ```
 #ifdef ALLOW_ICEPLUME
-C--   if useICEPLUME=T, set mypackage parameters; otherwise just return
-      CALL ICEPLUME_READPARMS( myThid )
+      CALL ICEPLUME_INIT_VARIA( myThid )
 #endif
 ```
 
