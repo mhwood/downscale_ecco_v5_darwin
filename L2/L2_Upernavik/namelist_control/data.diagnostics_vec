@@ -1,0 +1,126 @@
+ &DIAG_VEC_INPUT_VARS
+#
+ nml_startTime = 0,
+ nml_endTime = 3161600000.,
+#
+# lateral BC's are averaged hourly and dumped monthly
+#
+ nml_vecFiles(1) = 'dv/CTD_mask.bin',
+ nml_vecFiles(2) = 'dv/CTD_mask.bin',
+ nml_vecFiles(3) = 'dv/CTD_mask.bin',
+ nml_vecFiles(4) = 'dv/CTD_mask.bin',
+ nml_vecFiles(5) = 'dv/CTD_mask.bin',
+#
+ nml_vecFiles(6) = 'dv/Upernavik_N_mask.bin',
+ nml_vecFiles(7) = 'dv/Upernavik_N_mask.bin',
+ nml_vecFiles(8) = 'dv/Upernavik_N_mask.bin',
+ nml_vecFiles(9) = 'dv/Upernavik_N_mask.bin',
+ nml_vecFiles(10) = 'dv/Upernavik_N_mask.bin',
+#
+ nml_vecFiles(11) = 'dv/Kakivfaat_mask.bin',
+ nml_vecFiles(12) = 'dv/Kakivfaat_mask.bin',
+ nml_vecFiles(13) = 'dv/Kakivfaat_mask.bin',
+ nml_vecFiles(14) = 'dv/Kakivfaat_mask.bin',
+ nml_vecFiles(15) = 'dv/Kakivfaat_mask.bin',
+#
+ nml_vecFiles(16) = 'dv/Cornell_mask.bin',
+ nml_vecFiles(17) = 'dv/Cornell_mask.bin',
+ nml_vecFiles(18) = 'dv/Cornell_mask.bin',
+ nml_vecFiles(19) = 'dv/Cornell_mask.bin',
+ nml_vecFiles(20) = 'dv/Cornell_mask.bin',
+#
+# nml_vecFiles(16) = 'dv/iceplume_mask.bin',
+#
+# lateral bc's have 720 iterations per file (24*30)
+#
+ nml_vec_iters_per_file(1:20) = 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720, 720,
+#
+# lateral bc's have an averaging period of 6 hour (6*60*60)
+#
+ nml_vec_avg_periods(1:20) = 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600., 21600.,
+#
+ nml_fields2D(1:6,1) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,2) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,3) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,4) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,5) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,6) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,7) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,8) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,9) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,10) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,11) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,12) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,13) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,14) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,15) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,16) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,17) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,18) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,19) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+ nml_fields2D(1:6,20) = 'ETAN    ','UICE    ','VICE    ','AREA    ','HEFF    ','HSNOW   ',
+#
+ nml_fields3D(1:8,1)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,1)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,2)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,2)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,3)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,3)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:7,4)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,4)  =   61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:5,5) = 'THETA   ','SALT   ','VVEL   ','UVEL    ', 'WVEL    ',
+ nml_levels3D(1:5,5) =   61, 61, 61, 61, 61,
+#
+ nml_fields3D(1:8,6)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,6)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,7)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,7)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,8)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,8)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:7,9)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,9)  =   61, 61, 61, 61, 61, 61, 61,
+ nml_levels3D(1:7,9)  =   61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:5,10) = 'THETA   ','SALT   ','VVEL   ','UVEL    ', 'WVEL    ',
+ nml_levels3D(1:5,10) =   61, 61, 61, 61, 61,
+#
+ nml_fields3D(1:8,11)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,11)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,12)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,12)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,13)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,13)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:7,14)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,14)  =   61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:5,15) = 'THETA   ','SALT   ','VVEL   ','UVEL    ', 'WVEL    ',
+ nml_levels3D(1:5,15) =   61, 61, 61, 61, 61,
+#
+ nml_fields3D(1:8,16)  = 'PTRACE01','PTRACE02','PTRACE03','PTRACE04','PTRACE05','PTRACE06','PTRACE07','PTRACE08',
+ nml_levels3D(1:8,16)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,17)  = 'PTRACE09','PTRACE10','PTRACE11','PTRACE12','PTRACE13','PTRACE14','PTRACE15','PTRACE16',
+ nml_levels3D(1:8,17)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:8,18)  = 'PTRACE17','PTRACE18','PTRACE19','PTRACE20','PTRACE21','PTRACE22','PTRACE23','PTRACE24',
+ nml_levels3D(1:8,18)  =   61, 61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:7,19)  = 'PTRACE25','PTRACE26','PTRACE27','PTRACE28','PTRACE29','PTRACE30','PTRACE31',
+ nml_levels3D(1:7,19)  =   61, 61, 61, 61, 61, 61, 61,
+ nml_fields3D(1:5,20) =  'THETA   ','SALT   ','VVEL   ','UVEL    ', 'WVEL    ',
+ nml_levels3D(1:5,20) =   61, 61, 61, 61, 61,
+#
+# surface bc's are averaged every hour and dumped every month
+#
+# nml_sfFiles(1) = 'dv/L3_surface_mask.bin',
+#
+# surface bc's have 180 iterations per file (30*6)
+#
+# nml_sf_iters_per_file(1) = 180,
+#
+# surface bc's have an averaging period of 6 hour (6*60*60)
+#
+# nml_sf_avg_periods(1) = 21600.,
+#
+# nml_fieldsSF(1:8,1) = 'UWIND   ','VWIND  ','PRECIP ','SWDOWN  ','LWDOWN  ','ATEMP   ','AQH     ','RUNOFF  ',
+#
+ nml_filePrec = 32,
+ &
+
+
+
