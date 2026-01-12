@@ -8,6 +8,6 @@ The "parent model" from which all regional models are generated is the [ECCO-Dar
 
 Increased melt from Greenland's most active glacier fuels enhanced coastal productivity
 
-Wood et al 2025 (In Review)
+XWood et al 2025 (In Review)
 
 The configurations associated with this manuscript are [L1_W_Greenland](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L1/L1_W_Greenland)  and [L2_Disko_Bay](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L2/L2_Disko_Bay)
