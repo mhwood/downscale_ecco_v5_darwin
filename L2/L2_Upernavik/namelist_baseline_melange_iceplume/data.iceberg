@@ -1,0 +1,26 @@
+# ===================================
+# | Parameters for ICEBERG package |
+# ===================================
+ &ICEBERG_PARM01
+ ICEBERGopenFracFile = 'iceberg/openFrac.bin',
+ ICEBERGdriftFile = 'iceberg/driftMask.bin',
+ ICEBERGbarrierFile = 'iceberg/barrierMask.bin',
+ ICEBERGmaskFile = 'iceberg/bergMask.bin',
+ ICEBERGmeltFile = 'iceberg/meltMask.bin',
+ ICEBERGlengthFile = 'iceberg/icebergs_length.bin'
+ ICEBERGwidthsFile = 'iceberg/icebergs_widths.bin'
+ ICEBERGdepthsFile = 'iceberg/icebergs_depths.bin'
+ ICEBERGmaskNumsFile = 'iceberg/bergMaskNums.bin',
+ ICEBERGnumPerCellFile = 'iceberg/numBergsPerCell.bin',
+ ICEBERGareaFile = 'iceberg/totalBergArea.bin',
+ brg_uMin=0.04,
+ brg_iceTemp=-10,
+ brg_GamT = 0.088,
+ brg_GamS = 0.00248,
+ &
+
+ &ICEBERG_PARM02
+# brg_useInputPtracers = 1,
+# brg_ptracerMaskFile = 'iceberg/brg_tracerMask.bin',
+ &
+

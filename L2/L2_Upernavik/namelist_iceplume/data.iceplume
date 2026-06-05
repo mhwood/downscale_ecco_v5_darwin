@@ -1,0 +1,40 @@
+# ***************
+# ICEPLUME
+# ***************
+
+# For plume:
+ &ICEPLUME_PARM01
+ runoffQsgfile = 'iceplume/L2_Qsg'
+ plumeMaskFile = 'iceplume/L2_iceplume_mask.bin'
+ plumeLengthFile = 'iceplume/L2_iceplume_lengths.bin'
+ usePlumeDiagnostics=.TRUE.,
+ conserveMass = .FALSE.,
+ T_sg_0 = 0.001,
+ S_sg_0 = 0.001,
+ iceTemp=-10.,
+ backgroundVelthresh=0.04,
+ GamT = 0.088,
+ GamS = 0.00248,
+# iceberg params
+# brg_uMin=0.04,
+# brg_iceTemp=-10,
+# brg_GamT = 0.088,
+# brg_GamS = 0.00248,
+# GamTconst = 0.001,
+# slopeTmod = 0.9,
+# interceptTmod = -0.2,
+ &
+
+ &ICEPLUME_PARM02
+ &
+
+ &ICEPLUME_PARM03
+ &
+
+ &ICEPLUME_EXF_PARM04
+ runoffQsgstartdate1   = 19920101,
+ runoffQsgstartdate2   = 120000,
+ runoffQsgperiod       = 86400.0,
+ runoffQsg_inscal      = 1.0,
+ &
+

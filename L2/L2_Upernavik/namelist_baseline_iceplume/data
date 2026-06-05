@@ -58,7 +58,7 @@
  useAreaViscLength=.TRUE.,
  selectVortScheme = 2,
  bottomDragQuadratic = 0.0021,
- selectImplicitDrag  = 2,
+ selectImplicitDrag  = 0,
  tempAdvScheme=7,
  saltAdvScheme=7,
  StaggerTimeStep=.TRUE.,
@@ -72,6 +72,7 @@
  useSingleCPUio=.TRUE.,
 # globalFiles=.TRUE.,
  debugLevel=0,
+ selectAddFluid = 1,
  &
 
 # Elliptic solver parameters
@@ -82,17 +83,17 @@
 
 # Time stepping parameters
  &PARM03
- niter0=12623040,
+ niter0=31469760,
 # timesteps for generating grid
- nTimeSteps = 44641,
+ nTimeSteps = 89280,
  doAB_onGtGs=.FALSE.,
  alph_AB=0.5,
  beta_AB=0.281105,
- deltaT=60.,
- deltaTmom   =60.,
- deltaTtracer=60.,
- deltaTfreesurf=60.,
- deltaTClock =60.,
+ deltaT=30.,
+# deltaTmom   =30.,
+# deltaTtracer=30.,
+# deltaTfreesurf=30.,
+# deltaTClock =30.,
  cAdjFreq=0.,
  pChkptFreq=2592000.,
  chkptFreq=2592000.,

@@ -1,14 +1,14 @@
 # Packages
  &PACKAGES
- useCAL         = .TRUE.,
- useEXF         = .TRUE.,
- useDiagnostics = .TRUE.,
- useDiagnostics_vec = .TRUE.,
- useKPP         = .TRUE.,
- useGCHEM       = .TRUE.,
- useOBCS        = .TRUE.,
- usePTRACERS    = .TRUE.,
- useSALT_PLUME  = .TRUE.,
- useSeaice      = .TRUE.,
-# useIceplume    = .TRUE.,
- &
+ useEXF   = .TRUE.,
+ useCAL   = .TRUE.,
+ useKpp   = .TRUE.,
+ useSeaice= .TRUE.,
+ useSALT_PlUME=.TRUE.,
+ useDiagnostics_vec=.TRUE.,
+ useDiagnostics=.TRUE.,
+ useOBCS  = .TRUE.,
+ usePTRACERS   = .TRUE.,
+ useGCHEM      = .TRUE.,
+ useRADTRANS   = .TRUE.,
+ /

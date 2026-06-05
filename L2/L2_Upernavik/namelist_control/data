@@ -82,17 +82,13 @@
 
 # Time stepping parameters
  &PARM03
- niter0=12709440,
+ niter0=15734880,
 # timesteps for generating grid
- nTimeSteps = 482400,
+ nTimeSteps = 44640,
  doAB_onGtGs=.FALSE.,
  alph_AB=0.5,
  beta_AB=0.281105,
  deltaT=60.,
- deltaTmom   =60.,
- deltaTtracer=60.,
- deltaTfreesurf=60.,
- deltaTClock =60.,
  cAdjFreq=0.,
  pChkptFreq=2592000.,
  chkptFreq=2592000.,
@@ -101,7 +97,7 @@
  forcing_In_AB = .FALSE.,
  momDissip_In_AB   = .FALSE.,
  dumpInitAndLast=.FALSE.,
- writePickupAtEnd=.TRUE.,
+ writePickupAtEnd=.FALSE.,
 # pickupStrictlyMatch=.FALSE.,
  &
 
