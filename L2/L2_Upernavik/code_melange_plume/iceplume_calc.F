@@ -139,6 +139,7 @@ c      _RL runoffRad       (1-Olx:sNx+Olx,1-Oly:sNy+Oly)
       INTEGER iTracer
       _RL ptrPlume (PTRACERS_num)
       _RL ptrPlumeCum (PTRACERS_num)
+      _RL ptrPosFlux
       _RL ptrProf  (Nr,PTRACERS_num)
       INTEGER ip, jp, kp
 #endif
@@ -228,7 +229,7 @@ catn         DO I = 1,sNx
 #ifdef ALLOW_PTRACERS
 
 C Clear local plume ptracer variables
-
+          ptrPosFlux = 0. _d 0
           DO iTracer = 1,PTRACERS_num
            ptrPlume(iTracer)    = 0.D0
            ptrPlumeCum(iTracer) = 0.D0
@@ -626,53 +627,48 @@ catn: net column convergence is zero
 
 #ifdef ALLOW_PTRACERS
 
-C Add up total sum of each tracer in plume
-            DO K=1,iceDepthK-1
-             IF (volFLuxDiff(k) .LT. 0. ) THEN
-              DO iTracer = 1,PTRACERS_num
-              ptrPlumeCum(iTracer) 
-     &          = ptrPlumeCum(iTracer)
-     &             +(-volFluxDiff(k)*ptrProf(k,iTracer))
-              ENDDO
-             ENDIF
-            ENDDO
+C Add up total sum of each tracer in plume and total positive
+C detrainment volume flux.  This must use the post-conserveMass
+C volFluxDiff values.
+      ptrPosFlux = 0. _d 0
 
-C Add ptracers in runoff
+       DO K=1,iceDepthK-1
+C      DO K=kSrf(I,J),iceDepthK-1
 
-            IF ( useInputPtracers ) THEN
-             DO iTracer = 1,PTRACERS_num
+        IF ( volFluxDiff(k) .LT. 0. _d 0 ) THEN
+          DO iTracer = 1,PTRACERS_num
+            ptrPlumeCum(iTracer)
+     &       = ptrPlumeCum(iTracer)
+     &       + (-volFluxDiff(k)*ptrProf(k,iTracer))
+          ENDDO
+        ELSEIF ( volFluxDiff(k) .GT. 0. _d 0 ) THEN
+          ptrPosFlux = ptrPosFlux + volFluxDiff(k)
+        ENDIF
 
-              IF (ptracerMask(I,J,iTracer,bi,bj) .NE. 0 ) THEN
+      ENDDO
 
-               ptrPlumeCum(iTracer) =
-     &         ptrPlumeCum(iTracer) +
-     &         ptracerMask(I,J,iTracer,bi,bj) * ! ptracerMask is now a nx by ny by n_ptracers matrix
-     &         volFlux(iceDepthK)
+C Add ptracers in runoff. If discharge tracer concentration is zero,
+C ptracerMask should be zero and this contributes nothing.
+      IF ( useInputPtracers ) THEN
+        DO iTracer = 1,PTRACERS_num
+          IF ( ptracerMask(I,J,iTracer,bi,bj) .NE. 0. _d 0 ) THEN
+            ptrPlumeCum(iTracer)
+     &       = ptrPlumeCum(iTracer)
+     &       + ptracerMask(I,J,iTracer,bi,bj)
+     &       * volFlux(iceDepthK)
+          ENDIF
+        ENDDO
+      ENDIF
 
-              ENDIF
-             ENDDO
-            ENDIF
-
-C Calculate concentration of tracer in outflow 
-            DO K=1,iceDepthK-1
-C MW Changed from .GT. 0 to .GE. 1 to test for stability            
-             IF (volFluxDiff(k) .GE. 1. ) THEN
-              DO iTracer = 1,PTRACERS_num
-C              WRITE(msgBuf,'(A,I10,A,I5,A,I5,A,I5,A,F10.2,A,F10.2)')  
-C     &           "; Iter=", myIter,
-C     &           "; I=", I,
-C     &           "; J=", J,
-C     &           "; K=", K,
-C     &           "; ptrPlumeCum=", ptrPlumeCum(iTracer),
-C     &           "; volFluxDiff", volFluxDiff(k)
-C              CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-C     &                     SQUEEZE_RIGHT, myThid )
-               ptrPlume(iTracer)
-     &          = ptrPlumeCum(iTracer) / volFluxDiff(k)
-              ENDDO
-             ENDIF
-            ENDDO        
-
+C Calculate one conservative mixed plume concentration for all
+C positive detrainment levels.
+      DO iTracer = 1,PTRACERS_num
+        IF ( ptrPosFlux .GT. 1. _d -20 ) THEN
+          ptrPlume(iTracer) = ptrPlumeCum(iTracer) / ptrPosFlux
+        ELSE
+          ptrPlume(iTracer) = 0. _d 0
+        ENDIF
+      ENDDO
 
 #endif /* ALLOW_PTRACERS */
 

@@ -127,6 +127,14 @@ c       DO i=iMin,iMax
      I                   k, bi, bj, iTracer, myTime, 0, myThid )
 #endif /* ALLOW_ICEBERG */
 
+#ifdef ALLOW_ICEPLUME
+      IF ( useICEPLUME )
+     &     CALL ICEPLUME_TENDENCY_APPLY_PTRACERS(
+     U                   gPtracer,
+     I                   k, bi, bj, iTracer, myTime, myIter, myThid )
+#endif /* ALLOW_ICEPLUME */
+
+
 #endif /* ALLOW_PTRACERS */
 
       RETURN
