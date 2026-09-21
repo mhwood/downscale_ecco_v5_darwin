@@ -9,5 +9,11 @@ The "parent model" from which all regional models are generated is the [ECCO-Dar
 [Increased melt from Greenland's most active glacier fuels enhanced coastal productivity](https://www.nature.com/articles/s43247-025-02599-1)
 
 Wood et al 2025
-iA
+
 The configurations associated with this manuscript are [L1_W_Greenland](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L1/L1_W_Greenland)  and [L2_Disko_Bay](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L2/L2_Disko_Bay)
+
+Nonlinear interactions between subglacial discharge and iceberg melt enhance biological productivity around Upernavik, a major West Greenland fjord system
+
+Wood et al 2026, Under Review at JGRO
+
+The configurations associated with this manuscript are [L1_W_Greenland](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L1/L1_W_Greenland)  and [L2_Upernavik](https://github.com/mhwood/downscale_ecco_v5_darwin/tree/main/L2/L2_Upernavik)

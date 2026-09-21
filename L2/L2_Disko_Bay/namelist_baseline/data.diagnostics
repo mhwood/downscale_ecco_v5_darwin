@@ -1,0 +1,66 @@
+# Diagnostic Package Choices
+#
+ &diagnostics_list
+     dumpAtLast = .TRUE.,
+#--
+  fields(1:3,1) = 'plankC  ','PP      ','Chl     ',
+  fileName(1) = 'diags/BGC_day_prod/BGC_day_prod',
+  frequency(1) =  86400.,
+#
+  fields(1:5,2) = 'fnut0001','fnut0002','fnut0003','fnut0004','fnut0005',
+  fileName(2) = 'diags/BGC_day_fnut/BGC_day_fnut',
+  frequency(2) = 86400.,
+#
+  fields(1:5,3) = 'fIph0001','fIph0002','fIph0003','fIph0004','fIph0005',
+  fileName(3) = 'diags/BGC_day_fIph/BGC_day_fIph',
+  frequency(3) = 86400.,
+#
+  fields(1:5,4) = 'limN0001','limN0002','limN0003','limN0004','limN0005',
+  fileName(4) = 'diags/BGC_day_limN/BGC_day_limN',
+  frequency(4) = 86400.,
+#
+  fields(1:5,5) = 'limP0001','limP0002','limP0003','limP0004','limP0005',
+  fileName(5) = 'diags/BGC_day_limP/BGC_day_limP',
+  frequency(5) = 86400.,
+#
+  fields(1:2,6) = 'pH','pCO2',
+  fileName(6) = 'diags/BGC_day_pH/BGC_day_pH',
+  frequency(6) = 86400.,
+#
+  fields(1:2,7) = 'fluxCO2',
+  fileName(7) = 'diags/BGC_day_fluxCO2/BGC_day_fluxCO2',
+  frequency(7) = 86400.,
+#
+  fields(1,8) = 'PAR',
+  fileName(8) = 'diags/BGC_day_PAR/BGC_day_PAR',
+  frequency(8) = 86400.,
+#
+  fields(1:7,9) = 'TRAC01  ','TRAC02  ','TRAC03  ','TRAC04  ','TRAC05  ','TRAC06  ','TRAC07  ',
+  fileName(9) = 'diags/BGC_day_consts/BGC_day_consts',
+  frequency(9) = 86400.,
+#
+  fields(1:4,10) = 'TRAC08  ','TRAC09  ','TRAC10  ','TRAC11  ',
+  fileName(10) = 'diags/BGC_day_DO/BGC_day_DO',
+  frequency(10) = 86400.,
+#
+  fields(1:5,11) = 'TRAC12  ','TRAC13  ','TRAC14  ','TRAC15  ','TRAC16  ',
+  fileName(11) = 'diags/BGC_day_PO/BGC_day_PO',
+  frequency(11) = 86400.,
+#
+  fields(1:3,12) = 'TRAC17  ','TRAC18  ','TRAC19  ',
+  fileName(12) = 'diags/BGC_day_misc/BGC_day_misc',
+  frequency(12) = 86400.,
+#
+  fields(1:7,13) = 'TRAC20  ','TRAC21  ','TRAC22  ','TRAC23  ','TRAC24  ','TRAC25  ','TRAC26  ',
+  fileName(13) = 'diags/BGC_day_cx/BGC_day_cx',
+  frequency(13) = 86400.,
+#
+  fields(1:5,14) = 'TRAC27  ','TRAC28  ','TRAC29  ','TRAC30  ','TRAC31  ',
+  fileName(14) = 'diags/BGC_day_Chl/BGC_day_Chl',
+  frequency(14) = 86400.,
+ &
+
+# Parameter for Diagnostics of per level statistics:
+ &DIAG_STATIS_PARMS
+ &
+

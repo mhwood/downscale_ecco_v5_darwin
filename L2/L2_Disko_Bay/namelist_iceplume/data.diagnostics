@@ -1,0 +1,22 @@
+# Diagnostic Package Choices
+#
+ &diagnostics_list
+     dumpAtLast = .TRUE.,
+#--
+  fields(1:1,1) = 'ETAN',
+  fileName(1) = 'diags/EtaN/EtaN',
+  frequency(1) =  86400.,
+#
+  fields(1:2,3) = 'KPPdiffT','KPPdiffS',
+  fileName(3) = 'diags/KPP/KPP',
+  frequency(3) = 86400.,
+#
+  fields(1:3,4) = 'UVEL    ','VVEL    ','WVEL    ',
+  fileName(4) = 'diags/vel_day_snap/vel_day_snap',
+  frequency(4) = 86400.,
+ &
+
+# Parameter for Diagnostics of per level statistics:
+ &DIAG_STATIS_PARMS
+ &
+
